@@ -131,7 +131,7 @@ async function markMessagesAsRead(from, to) {
 
         const result = await db.promise().query(
             `UPDATE messages 
-            SET read_at = NOW()
+            SET read_at = CURRENT_TIMESTAMP
             WHERE sender_id = ?
             AND receiver_id = ?
             AND read_at IS NULL`,
@@ -192,7 +192,7 @@ io.on('connection', async (socket) => {
 
             const [messages] = await db.promise().query(
                 `SELECT 
-                    messages.*,
+                    messages.*, 
                     sender.username as sender_username,
                     receiver.username as receiver_username
                 FROM messages
@@ -234,12 +234,20 @@ io.on('connection', async (socket) => {
             const senderId = senderResult[0].id;
             const receiverId = receiverResult[0].id;
 
-            // Guardar mensaje en la base de datos con read_at NULL
-            const [insertResult] = await db.promise().query(
-                'INSERT INTO messages (sender_id, receiver_id, message, read_at) VALUES (?, ?, ?, NULL)',
+            // Insertar el mensaje en la base de datos
+            const [result] = await db.promise().query(
+                'INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)',
                 [senderId, receiverId, message]
             );
-            console.log('Mensaje guardado en la base de datos:', insertResult);
+            console.log('Mensaje guardado en la base de datos:', result);
+
+            // Marcar mensajes como leídos
+            await db.promise().query(
+                `UPDATE messages 
+                SET read_at = CURRENT_TIMESTAMP 
+                WHERE sender_id = ? AND receiver_id = ? AND read_at IS NULL`,
+                [senderId, receiverId]
+            );
 
             // Obtener el socket del destinatario
             const recipientSocket = Array.from(connectedUsers.entries())
@@ -364,7 +372,7 @@ app.post('/register', async (req, res) => {
 
         // Insertar nuevo usuario
         await db.promise().query(
-            'INSERT INTO users (username, password, ip, port, created_at) VALUES (?, ?, ?, ?, NOW())',
+            'INSERT INTO users (username, password, ip, port, timestamp) VALUES (?, ?, ?, ?, NOW())',
             [username, hashedPassword, ip, port]
         );
 
