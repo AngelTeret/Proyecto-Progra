@@ -22,7 +22,7 @@ function sendMessage() {
     const message = messageInput.value.trim();
     
     if (message && user) {
-        socket.emit('sendMessage', { sender: user.id, receiver: 2, message }); // ID receptor de prueba
+        socket.emit('sendMessage', { sender: user.id, receiver: 2, message }); 
         messageInput.value = '';
     }
 }
