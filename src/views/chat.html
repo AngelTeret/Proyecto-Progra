@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0084ff;
+            --secondary-color: #f0f2f5;
+            --text-color: #050505;
+            --text-secondary: #65676b;
+            --online-color: #31a24c;
+            --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+        }
+
+        .chat-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: var(--shadow);
+        }
+
+        .users-panel {
+            width: 320px;
+            background: #fff;
+            border-right: 1px solid var(--secondary-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .current-user {
+            padding: 15px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-avatar span {
+            font-size: 20px;
+            color: #666;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-info span {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .users-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .users-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .users-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            gap: 10px;
+        }
+
+        .user-item:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .user-item.selected {
+            background-color: #e7f3ff;
+        }
+
+        .user-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 12px;
+            background-color: #ccc;
+        }
+
+        .user-status.online {
+            background-color: var(--online-color);
+        }
+
+        .unread-counter {
+            background: #25D366;
+            color: white;
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 6px;
+            font-size: 12px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: auto;
+        }
+
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+        }
+
+        .chat-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--secondary-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-left: 12px;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            max-width: 60%;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .message.received {
+            background-color: var(--secondary-color);
+            align-self: flex-start;
+        }
+
+        .message.sent {
+            background-color: var(--primary-color);
+            color: white;
+            align-self: flex-end;
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .chat-input {
+            padding: 16px;
+            border-top: 1px solid var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 24px;
+            background-color: var(--secondary-color);
+            font-size: 0.95rem;
+            outline: none;
+            transition: background-color 0.2s;
+        }
+
+        .message-input:focus {
+            background-color: #e4e6e9;
+        }
+
+        .send-button {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .send-button:hover {
+            background-color: #006edb;
+        }
+
+        .send-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .logout-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 20px;
+            background-color: #dc3545;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin: 16px;
+        }
+
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+
+        @media (max-width: 768px) {
+            .chat-container {
+                flex-direction: column;
+            }
+
+            .users-panel {
+                width: 100%;
+                height: 40%;
+                border-right: none;
+                border-bottom: 1px solid var(--secondary-color);
+            }
+
+            .chat-panel {
+                height: 60%;
+            }
+
+            .message {
+                max-width: 80%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="users-panel">
+            <div class="current-user">
+                <div class="user-avatar">
+                    <span></span>
+                </div>
+                <div class="user-info">
+                    <span id="currentUsername"></span>
+                </div>
+            </div>
+            <div class="users-list" id="usersList"></div>
+            <button class="logout-button" onclick="logout()">Cerrar Sesión</button>
+        </div>
+        <div class="chat-panel">
+            <div class="chat-header">
+                <h3 id="selectedUser">Selecciona un usuario para chatear</h3>
+            </div>
+            <div class="messages-container" id="messagesContainer"></div>
+            <div class="chat-input">
+                <input type="text" class="message-input" id="messageInput" placeholder="Escribe un mensaje..." disabled>
+                <button class="send-button" id="sendButton" onclick="sendMessage()" disabled>Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let selectedUser = null;
+        const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+
+        if (!userInfo) {
+            window.location.href = '/login';
+        }
+
+        // Mostrar nombre de usuario actual
+        document.getElementById('currentUsername').textContent = userInfo.username;
+        document.querySelector('.user-avatar span').textContent = userInfo.username.charAt(0).toUpperCase();
+
+        // Conectar socket
+        socket.emit('register socket', userInfo.username);
+
+        // Manejar lista de usuarios
+        socket.on('users update', (users) => {
+            console.log('Recibida actualización de usuarios:', users);
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = '';
+            
+            const currentUser = users.find(u => u.username === userInfo.username);
+            console.log('Usuario actual:', currentUser);
+            
+            users.forEach(user => {
+                if (user.username !== userInfo.username) {
+                    const div = document.createElement('div');
+                    div.className = `user-item ${selectedUser === user.username ? 'selected' : ''}`;
+                    
+                    // Solo mostrar mensajes no leídos si no es el chat actualmente seleccionado
+                    const unreadCount = selectedUser !== user.username ? 
+                        (currentUser?.unreadMessages[user.username] || 0) : 0;
+                    
+                    div.innerHTML = `
+                        <div class="user-status ${user.online ? 'online' : ''}"></div>
+                        <span class="user-name">${user.username}</span>
+                        ${unreadCount > 0 ? `<span class="unread-counter">${unreadCount}</span>` : ''}
+                    `;
+                    div.onclick = () => selectUser(user.username);
+                    usersList.appendChild(div);
+                }
+            });
+        });
+
+        // Agregar evento al input de mensaje para marcar como leídos
+        document.getElementById('messageInput').addEventListener('focus', function() {
+            if (selectedUser) {
+                socket.emit('request messages', { with: selectedUser });
+            }
+        });
+
+        // Manejar mensajes privados
+        socket.on('private message', (data) => {
+            console.log('Mensaje privado recibido:', data);
+            
+            // Si el mensaje es del usuario seleccionado, mostrarlo
+            if (data.from === selectedUser) {
+                const container = document.getElementById('messagesContainer');
+                const div = document.createElement('div');
+                div.className = 'message received';
+                
+                const time = new Date(data.timestamp).toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                div.innerHTML = `
+                    ${data.message}
+                    <div class="message-time">${time}</div>
+                `;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            }
+            
+            // Solicitar actualización de la lista de usuarios para actualizar contadores
+            socket.emit('request users list');
+        });
+
+        // Manejar historial de mensajes
+        socket.on('message history', (messages) => {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const isReceived = msg.sender_username !== userInfo.username;
+                const div = document.createElement('div');
+                div.className = `message ${isReceived ? 'received' : 'sent'}`;
+                
+                const time = new Date(msg.timestamp).toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                div.innerHTML = `
+                    ${msg.message}
+                    <div class="message-time">${time}</div>
+                `;
+                container.appendChild(div);
+            });
+            
+            container.scrollTop = container.scrollHeight;
+        });
+
+        // Seleccionar usuario para chatear
+        function selectUser(username) {
+            console.log('Seleccionando usuario:', username);
+            selectedUser = username;
+            document.getElementById('selectedUser').textContent = username;
+            
+            const messageInput = document.getElementById('messageInput');
+            const sendButton = document.getElementById('sendButton');
+            
+            messageInput.disabled = false;
+            sendButton.disabled = false;
+            messageInput.placeholder = `Escribe un mensaje para ${username}...`;
+            
+            // Actualizar selección visual
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.classList.remove('selected');
+                if (item.querySelector('.user-name').textContent === username) {
+                    item.classList.add('selected');
+                }
+            });
+
+            // Limpiar mensajes anteriores
+            document.getElementById('messagesContainer').innerHTML = '';
+            
+            // Solicitar mensajes específicos para este usuario
+            socket.emit('request messages', { with: username });
+        }
+
+        // Enviar mensaje
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            
+            if (message && selectedUser) {
+                console.log('Enviando mensaje a:', selectedUser);
+                socket.emit('private message', {
+                    to: selectedUser,
+                    message: message
+                });
+
+                const container = document.getElementById('messagesContainer');
+                const div = document.createElement('div');
+                div.className = 'message sent';
+                
+                const time = new Date().toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                div.innerHTML = `
+                    ${message}
+                    <div class="message-time">${time}</div>
+                `;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+                
+                input.value = '';
+            }
+        }
+
+        // Enter para enviar mensaje
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Función de logout
+        function logout() {
+            sessionStorage.removeItem('userInfo');
+            window.location.href = '/login';
+        }
+
+        // Solicitar lista de usuarios al cargar
+        socket.emit('request users list');
+    </script>
+</body>
+</html>

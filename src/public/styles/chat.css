@@ -1,0 +1,266 @@
+/* Layout principal */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f0f2f5;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+/* Panel lateral de usuarios */
+.users-panel {
+    width: 300px;
+    background: #fff;
+    border-right: 1px solid #dadce0;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-info {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dadce0;
+    font-size: 14px;
+}
+
+.users-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Estilos de usuario individual */
+.user-item {
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.user-item:hover {
+    background-color: #f5f5f5;
+}
+
+.user-item.active {
+    background-color: #e8f0fe;
+    color: #1a73e8;
+}
+
+.user-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.user-status.online {
+    background: #34a853;
+}
+
+.user-status.offline {
+    background: #dadce0;
+}
+
+/* Panel de chat */
+.chat-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    padding: 20px;
+    border-bottom: 1px solid #dadce0;
+    background: #fff;
+    font-weight: bold;
+    color: #202124;
+}
+
+.messages-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+/* Estilos de mensajes */
+.message {
+    margin-bottom: 15px;
+    max-width: 70%;
+    clear: both;
+}
+
+.message.sent {
+    float: right;
+}
+
+.message.received {
+    float: left;
+}
+
+.message-content {
+    padding: 10px 15px;
+    border-radius: 15px;
+    position: relative;
+    word-wrap: break-word;
+}
+
+.message.sent .message-content {
+    background: #1a73e8;
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+
+.message.received .message-content {
+    background: #fff;
+    color: #202124;
+    border-bottom-left-radius: 5px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.message-time {
+    font-size: 12px;
+    color: #5f6368;
+    margin-top: 5px;
+}
+
+.message-from {
+    font-size: 12px;
+    color: #5f6368;
+    margin-bottom: 4px;
+}
+
+/* Input de mensaje */
+.message-input-container {
+    padding: 20px;
+    background: #fff;
+    border-top: 1px solid #dadce0;
+    display: flex;
+    gap: 10px;
+}
+
+.message-input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #dadce0;
+    border-radius: 20px;
+    resize: none;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    max-height: 100px;
+    min-height: 44px;
+}
+
+.message-input:focus {
+    outline: none;
+    border-color: #1a73e8;
+}
+
+.send-button {
+    padding: 0 20px;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.send-button:hover {
+    background: #1557b0;
+}
+
+.send-button:disabled {
+    background: #dadce0;
+    cursor: not-allowed;
+}
+
+/* Botón de cerrar sesión */
+.logout-button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+    width: 100%;
+}
+
+.logout-button:hover {
+    background: #c82333;
+}
+
+/* Estados y mensajes */
+.no-users, .error-message, .select-user-message {
+    text-align: center;
+    color: #5f6368;
+    padding: 20px;
+    font-size: 14px;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        flex-direction: column;
+    }
+
+    .users-panel {
+        width: 100%;
+        max-height: 200px;
+    }
+
+    .message {
+        max-width: 85%;
+    }
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #dadce0;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #5f6368;
+}
