@@ -1,20 +1,21 @@
--- Crear la base de datos si no existe
-CREATE DATABASE IF NOT EXISTS chatapp;
+-- Crear la base de datos
+CREATE DATABASE chatapp;
+
 USE chatapp;
 
 -- Crear tabla de usuarios
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
+    username VARCHAR(255) UNIQUE,
+    password VARCHAR(255),
     ip VARCHAR(45),
     port INT,
-    socketId VARCHAR(100),
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    socketId VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Crear tabla de mensajes
-CREATE TABLE IF NOT EXISTS messages (
+CREATE TABLE messages (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sender_id INT,
     receiver_id INT,

@@ -371,8 +371,8 @@ app.post('/register', async (req, res) => {
         const port = await getAvailablePort(50000);
 
         // Insertar nuevo usuario
-        await db.promise().query(
-            'INSERT INTO users (username, password, ip, port, timestamp) VALUES (?, ?, ?, ?, NOW())',
+        const [result] = await db.promise().query(
+            'INSERT INTO users (username, password, ip, port, created_at) VALUES (?, ?, ?, ?, NOW())',
             [username, hashedPassword, ip, port]
         );
 
