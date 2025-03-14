@@ -55,21 +55,7 @@ socket.on('private message', (data) => {
     
     // Si el mensaje es del usuario seleccionado, mostrarlo
     if (data.from === selectedUser) {
-        const container = document.getElementById('messagesContainer');
-        const div = document.createElement('div');
-        div.className = 'message received';
-        
-        const time = new Date(data.timestamp).toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        div.innerHTML = `
-            ${data.message}
-            <div class="message-time">${time}</div>
-        `;
-        container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
+        appendMessage(data, true);
     }
     
     // Solicitar actualización de la lista de usuarios para actualizar contadores
@@ -78,27 +64,7 @@ socket.on('private message', (data) => {
 
 // Manejar historial de mensajes
 socket.on('message history', (messages) => {
-    const container = document.getElementById('messagesContainer');
-    container.innerHTML = '';
-    
-    messages.forEach(msg => {
-        const isReceived = msg.sender_username !== userInfo.username;
-        const div = document.createElement('div');
-        div.className = `message ${isReceived ? 'received' : 'sent'}`;
-        
-        const time = new Date(msg.timestamp).toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        div.innerHTML = `
-            ${msg.message}
-            <div class="message-time">${time}</div>
-        `;
-        container.appendChild(div);
-    });
-    
-    container.scrollTop = container.scrollHeight;
+    loadMessageHistory(messages);
 });
 
 // Seleccionar usuario para chatear
@@ -141,21 +107,7 @@ function sendMessage() {
             message: message
         });
 
-        const container = document.getElementById('messagesContainer');
-        const div = document.createElement('div');
-        div.className = 'message sent';
-        
-        const time = new Date().toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        div.innerHTML = `
-            ${message}
-            <div class="message-time">${time}</div>
-        `;
-        container.appendChild(div);
-        container.scrollTop = container.scrollHeight;
+        appendMessage({ message, created_at: new Date().toISOString() });
         
         input.value = '';
     }
@@ -167,6 +119,57 @@ document.getElementById('messageInput').addEventListener('keypress', (e) => {
         sendMessage();
     }
 });
+
+// Función para formatear la hora
+function formatMessageTime(created_at) {
+    const time = new Date(created_at).toLocaleTimeString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    return time;
+}
+
+// Agregar mensaje al chat
+function appendMessage(data, isReceived = false) {
+    const messageContainer = document.createElement('div');
+    messageContainer.className = `message ${isReceived ? 'received' : 'sent'}`;
+    
+    const time = formatMessageTime(data.created_at);
+    
+    messageContainer.innerHTML = `
+        <div class="message-content">
+            <p>${data.message}</p>
+            <span class="message-time">${time}</span>
+        </div>
+    `;
+    
+    const messagesContainer = document.getElementById('messagesContainer');
+    messagesContainer.appendChild(messageContainer);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+// Cargar historial de mensajes
+function loadMessageHistory(messages) {
+    const messagesContainer = document.getElementById('messagesContainer');
+    messagesContainer.innerHTML = '';
+    messages.forEach(msg => {
+        const isReceived = msg.sender_username !== userInfo.username;
+        const time = formatMessageTime(msg.created_at);
+        
+        const messageContainer = document.createElement('div');
+        messageContainer.className = `message ${isReceived ? 'received' : 'sent'}`;
+        
+        messageContainer.innerHTML = `
+            <div class="message-content">
+                <p>${msg.message}</p>
+                <span class="message-time">${time}</span>
+            </div>
+        `;
+        
+        messagesContainer.appendChild(messageContainer);
+    });
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
 
 // Función de logout
 function logout() {

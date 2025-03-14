@@ -20,7 +20,7 @@ CREATE TABLE messages (
     sender_id INT,
     receiver_id INT,
     message TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     read_at TIMESTAMP NULL,
     FOREIGN KEY (sender_id) REFERENCES users(id),
     FOREIGN KEY (receiver_id) REFERENCES users(id)
