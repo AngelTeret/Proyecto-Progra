@@ -4,19 +4,27 @@ const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 const http = require('http');
+const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
 const io = require('socket.io')(server, {
     cors: {
         origin: "*",
-        methods: ["GET", "POST"]
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
+// Configuración de CORS
+app.use(cors({
+    origin: true,
+    credentials: true
+}));
+
 // Configuración de la sesión
 const sessionMiddleware = session({
-    secret: 'tu_secreto_aqui',
+    secret: 'secret',
     resave: false,
     saveUninitialized: true,
     cookie: { 
@@ -35,10 +43,11 @@ app.use(express.static(path.join(__dirname, 'views')));
 
 // Conexión a la base de datos
 const db = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'chatapp',
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_DATABASE || 'chatapp',
+    port: process.env.DB_PORT || 3306,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -356,6 +365,39 @@ app.post('/logout', (req, res) => {
 
 // Iniciar servidor
 const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => {
-    console.log(`Servidor corriendo en puerto ${PORT}`);
+const HOST = '0.0.0.0'; // Esto permite conexiones desde cualquier IP
+
+server.listen(PORT, HOST, () => {
+    console.log(`\n=== Servidor de Chat Iniciado ===`);
+    
+    // Obtener y mostrar las IPs disponibles
+    const networkInterfaces = require('os').networkInterfaces();
+    console.log('\nURLs disponibles para conectarse:');
+    
+    let availableIPs = [];
+    Object.keys(networkInterfaces).forEach((interfaceName) => {
+        networkInterfaces[interfaceName].forEach((interface) => {
+            if (interface.family === 'IPv4' && !interface.internal) {
+                availableIPs.push({
+                    name: interfaceName,
+                    ip: interface.address
+                });
+                console.log(`${interfaceName}: http://${interface.address}:${PORT}`);
+            }
+        });
+    });
+    
+    if (availableIPs.length === 0) {
+        console.log('No se encontraron IPs disponibles en la red local');
+    } else {
+        console.log('\nPara verificar la conexión, puedes usar estos comandos:');
+        availableIPs.forEach(({ip}) => {
+            console.log(`ping ${ip}`);
+        });
+    }
+    
+    console.log('\nAsegúrate de:');
+    console.log('1. Que el firewall de Windows permita conexiones al puerto', PORT);
+    console.log('2. Que ambas computadoras estén en la misma red');
+    console.log('3. Que puedas hacer ping entre las computadoras');
 });
