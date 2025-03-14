@@ -70,8 +70,9 @@ loginForm.addEventListener('submit', async (e) => {
         if (response.ok) {
             // Guardar información del usuario
             sessionStorage.setItem('userInfo', JSON.stringify({
-                username: data.username,
-                id: data.id
+                username: data.user.username,
+                id: data.user.id,
+                unreadMessages: data.user.unreadMessages || {}
             }));
             
             // Redirigir al chat

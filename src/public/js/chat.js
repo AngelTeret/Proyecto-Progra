@@ -1,17 +1,24 @@
-const socket = io();
+// Variables globales
 let selectedUser = null;
 const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
 
-if (!userInfo) {
+// Verificar si hay información de usuario
+if (!userInfo || !userInfo.username) {
     window.location.href = '/login';
 }
 
-// Mostrar nombre de usuario actual
-document.getElementById('currentUsername').textContent = userInfo.username;
-document.querySelector('.user-avatar span').textContent = userInfo.username.charAt(0).toUpperCase();
+const currentUser = userInfo.username;
 
-// Conectar socket
-socket.emit('register socket', userInfo.username);
+// Configurar socket
+const socket = io();
+
+// Mostrar nombre de usuario actual
+document.getElementById('currentUsername').textContent = currentUser;
+document.querySelector('.user-avatar span').textContent = currentUser.charAt(0).toUpperCase();
+
+// Registrar el socket del usuario
+console.log('Registrando socket para:', currentUser);
+socket.emit('register socket', currentUser);
 
 // Manejar lista de usuarios
 socket.on('users update', (users) => {
@@ -19,23 +26,20 @@ socket.on('users update', (users) => {
     const usersList = document.getElementById('usersList');
     usersList.innerHTML = '';
     
-    const currentUser = users.find(u => u.username === userInfo.username);
-    console.log('Usuario actual:', currentUser);
-    
     users.forEach(user => {
-        if (user.username !== userInfo.username) {
+        if (user.username !== currentUser) {
             const div = document.createElement('div');
             div.className = `user-item ${selectedUser === user.username ? 'selected' : ''}`;
             
-            // Solo mostrar mensajes no leídos si no es el chat actualmente seleccionado
-            const unreadCount = selectedUser !== user.username ? 
-                (currentUser?.unreadMessages[user.username] || 0) : 0;
+            // Obtener mensajes no leídos enviados por este usuario al usuario actual
+            const unreadCount = users.find(u => u.username === currentUser)?.unreadMessages?.[user.username] || 0;
             
             div.innerHTML = `
                 <div class="user-status ${user.online ? 'online' : ''}"></div>
                 <span class="user-name">${user.username}</span>
-                ${unreadCount > 0 ? `<span class="unread-counter">${unreadCount}</span>` : ''}
+                ${unreadCount > 0 ? `<div class="unread-counter">${unreadCount}</div>` : ''}
             `;
+            
             div.onclick = () => selectUser(user.username);
             usersList.appendChild(div);
         }
@@ -56,6 +60,9 @@ socket.on('private message', (data) => {
     // Si el mensaje es del usuario seleccionado, mostrarlo
     if (data.from === selectedUser) {
         appendMessage(data, true);
+    } else {
+        // Si el mensaje no es del usuario seleccionado, solicitar actualización de la lista
+        socket.emit('request users list');
     }
     
     // Solicitar actualización de la lista de usuarios para actualizar contadores
@@ -115,7 +122,8 @@ function sendMessage() {
 
 // Enter para enviar mensaje
 document.getElementById('messageInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
         sendMessage();
     }
 });
@@ -153,28 +161,32 @@ function loadMessageHistory(messages) {
     const messagesContainer = document.getElementById('messagesContainer');
     messagesContainer.innerHTML = '';
     messages.forEach(msg => {
-        const isReceived = msg.sender_username !== userInfo.username;
-        const time = formatMessageTime(msg.created_at);
-        
-        const messageContainer = document.createElement('div');
-        messageContainer.className = `message ${isReceived ? 'received' : 'sent'}`;
-        
-        messageContainer.innerHTML = `
-            <div class="message-content">
-                <p>${msg.message}</p>
-                <span class="message-time">${time}</span>
-            </div>
-        `;
-        
-        messagesContainer.appendChild(messageContainer);
+        const isReceived = msg.sender_username !== currentUser;
+        appendMessage({
+            message: msg.message,
+            created_at: msg.created_at || msg.timestamp
+        }, isReceived);
     });
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 // Función de logout
-function logout() {
-    sessionStorage.removeItem('userInfo');
-    window.location.href = '/login';
+async function logout() {
+    try {
+        const response = await fetch('/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            sessionStorage.removeItem('userInfo');
+            window.location.href = '/login';
+        }
+    } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+    }
 }
 
 // Solicitar lista de usuarios al cargar
