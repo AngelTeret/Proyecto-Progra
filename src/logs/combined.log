@@ -1,0 +1,10 @@
+[2025-04-21T08:52:58.480Z] info: Inicio de pago | Cliente: Henry Angel Gabriel | Monto: 35 | Trama: 202504210252580101000101019902314950100000035000064266617342800
+[2025-04-21T08:52:58.488Z] info: Datos de trama extraídos | Referencia: 642666173428 | Cliente: Henry Angel Gabriel
+[2025-04-21T08:52:58.709Z] info: Respuesta banco | Estado: 01 | Descripción: 202504210252580101000101019902314950100000035000064266617342801
+[2025-04-21T08:52:58.710Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 199877552843 | Cliente: Henry Angel Gabriel
+[2025-04-21T08:52:58.713Z] info: Transacción exitosa | Referencia: 199877552843 | Cliente: Henry Angel Gabriel | Monto: 35
+[2025-04-21T08:58:06.486Z] info: Inicio de pago | Cliente: Henry Angel Gabriel | Monto: 1525 | Trama: 202504210258060101000101019902314950100001525000099246508603300
+[2025-04-21T08:58:06.491Z] info: Datos de trama extraídos | Referencia: 992465086033 | Cliente: Henry Angel Gabriel
+[2025-04-21T08:58:06.701Z] info: Respuesta banco | Estado: 01 | Descripción: 202504210258060101000101019902314950100001525000099246508603301
+[2025-04-21T08:58:06.702Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 139922467083 | Cliente: Henry Angel Gabriel
+[2025-04-21T08:58:06.704Z] info: Transacción exitosa | Referencia: 139922467083 | Cliente: Henry Angel Gabriel | Monto: 1525

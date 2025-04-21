@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finalizar Compra - Rhode</title>
+    <link rel="stylesheet" href="/styles/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- SweetAlert2 CSS y JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <header class="barraSuperior">
+        <nav class="barraNavegacion">
+            <ul>
+                <li><a href="/" class="enlaceNav">INICIO</a></li>
+                <li><a href="/productos" class="enlaceNav">PRODUCTOS</a></li>
+            </ul>
+            <div class="logo">rhode</div>
+            <ul>
+                <!-- Se quitó el botón del carrito de esta página ya que el usuario está en el proceso de pago -->
+            </ul>
+        </nav>
+    </header>
+    
+    <main class="pago-container">
+        <div class="pago-info">
+            <div class="pago-header">
+                <div class="pago-logo">rhode</div>
+            </div>
+            
+            <div class="pago-section">
+                <h2>Información de contacto</h2>
+                <form class="pago-form" id="contactForm">
+                    <div class="full-width">
+                        <input type="text" class="pago-input" id="nombrePila" name="nombre" placeholder="Nombres" required>
+                    </div>
+                    <div class="full-width">
+                        <input type="text" class="pago-input" id="apellido" name="apellido" placeholder="Apellidos" required>
+                    </div>
+                    <div class="full-width">
+                        <input type="text" class="pago-input" id="direccion" name="direccion" placeholder="Dirección" required>
+                    </div>
+                    <div class="full-width">
+                        <input type="email" class="pago-input" id="correo" name="correo" placeholder="Correo electrónico" required>
+                    </div>
+                    <div class="full-width">
+                        <input type="tel" class="pago-input" id="telefono" name="telefono" placeholder="Teléfono" required>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="pago-resumen" id="resumenPago">
+            <!-- Aquí se cargará dinámicamente el resumen del pedido -->
+        </div>
+    </main>
+
+    <!-- Modal para procesar el pago con el banco -->
+    <div id="modalPago" class="modal">
+        <div class="modal-content">
+            <span class="cerrar-modal">&times;</span>
+            <h2>Procesar Pago</h2>
+            <div id="modalPagoForm">
+                <div class="campo-modal">
+                    <label for="tipoTransaccion">Tipo de Transacción</label>
+                    <select id="tipoTransaccion" class="input-modal">
+                        <option value="01">Pago</option>
+                        <option value="02">Retiro</option>
+                        <option value="03">Depósito</option>
+                    </select>
+                </div>
+                <div class="campo-modal">
+                    <label for="canalTerminal">Canal/Terminal</label>
+                    <select id="canalTerminal" class="input-modal">
+                        <option value="01">Pagos Web</option>
+                        <option value="02">Banca Web</option>
+                        <option value="03">Cajero</option>
+                        <option value="04">POS</option>
+                        <option value="05">POS2</option>
+                    </select>
+                </div>
+                <div class="campo-modal">
+                    <label for="idEmpresa">ID de Empresa</label>
+                    <input type="text" id="idEmpresa" class="input-modal" value="0001" maxlength="4" pattern="[0-9]{4}">
+                </div>
+                <div class="campo-modal">
+                    <label for="idSucursal">ID de Sucursal</label>
+                    <input type="text" id="idSucursal" class="input-modal" value="01" maxlength="2" pattern="[0-9]{2}">
+                </div>
+                <div class="campo-modal">
+                    <label for="codigoCliente">Código de Cliente</label>
+                    <input type="text" id="codigoCliente" class="input-modal" placeholder="Ingrese código de cliente" maxlength="10" pattern="[0-9]{10}">
+                </div>
+                <div class="campo-modal">
+                    <label for="tipoMoneda">Tipo de Moneda</label>
+                    <select id="tipoMoneda" class="input-modal">
+                        <option value="01">GTQ (Quetzal)</option>
+                        <option value="02">USD (Dólar)</option>
+                        <option value="03">EUR (Euro)</option>
+                    </select>
+                </div>
+                <div class="campo-modal">
+                    <label for="numeroReferencia">Número de Referencia</label>
+                    <input type="text" id="numeroReferencia" class="input-modal" placeholder="Número de referencia" maxlength="12" pattern="[0-9]{12}">
+                </div>
+                <div id="resultado-transaccion" class="hidden">
+                    <div class="procesando-pago">
+                        <div class="spinner"></div>
+                        <p>Procesando pago...</p>
+                    </div>
+                    <div class="resultado-final hidden">
+                        <div class="icono-resultado"></div>
+                        <p class="mensaje-resultado"></p>
+                    </div>
+                </div>
+                <button id="btnProcesarPago" class="btn-procesar-pago">Procesar Pago</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Servicios centralizados -->
+    <script src="/js/services/validationService.js"></script>
+    <script src="/js/services/cartService.js"></script>
+    <script src="/js/services/apiService.js"></script>
+    <script src="/js/services/uiService.js"></script>
+    <script src="/js/services/index.js"></script>
+    <script src="/js/main.js"></script>
+    <script>cargarPago();</script>
+</body>
+</html>

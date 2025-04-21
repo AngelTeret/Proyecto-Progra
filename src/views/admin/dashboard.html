@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - Dashboard</title>
+    <link rel="stylesheet" href="/styles/admin.css">
+</head>
+<body class="admin-page">
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Panel Admin</h2>
+        </div>
+        <ul class="menu">
+            <li class="active"><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="productos.html"><i class="fas fa-box"></i> Productos</a></li>    
+
+            <li><a href="categorias.html"><i class="fas fa-tags"></i> Categorías</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button onclick="cerrarSesion()" class="btn-logout">Cerrar sesión</button>
+        </div>
+    </nav>
+
+    <main class="content">
+        <header class="content-header">
+            <h1>Dashboard</h1>
+            <div class="user-info">
+                <span id="nombreAdmin">Administrador</span>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Ventas del día</h3>
+                <p class="number" id="ventasDia">$0.00</p>
+            </div>
+            <div class="card">
+                
+                
+            </div>
+            <div class="card">
+                <h3>Productos activos</h3>
+                <p class="number" id="productosActivos">0</p>
+            </div>
+            <div class="card">
+                <h3>Total clientes</h3>
+                <p class="number" id="totalClientes">0</p>
+            </div>
+        </div>
+
+        <div class="dashboard-charts">
+            <div class="chart-container">
+                <h3>Ventas últimos 7 días</h3>
+                <canvas id="ventasChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3>Productos más vendidos</h3>
+                <canvas id="productosChart"></canvas>
+            </div>
+        </div>
+
+        <div class="recent-orders">
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Cliente</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Se llena dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+        <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Scripts propios -->
+    <script src="/js/admin/auth.js"></script>
+    <script src="/js/admin/dashboard.js"></script>
+</body>
+</html>

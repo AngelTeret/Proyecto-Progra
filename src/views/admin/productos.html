@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrativo - Productos</title>
+    <link rel="stylesheet" href="/styles/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="admin-page">
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Panel Admin</h2>
+        </div>
+        <ul class="menu">
+            <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li class="active"><a href="productos.html"><i class="fas fa-box"></i> Productos</a></li>
+            
+            
+            <li><a href="categorias.html"><i class="fas fa-tags"></i> Categorías</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button onclick="cerrarSesion()" class="btn-logout">Cerrar sesión</button>
+        </div>
+    </nav>
+
+    <main class="content">
+        <header class="content-header">
+            <h1>Gestión de Productos</h1>
+            <button class="btn btn-primary" onclick="mostrarModalProducto()">
+                <i class="fas fa-plus"></i> Nuevo Producto
+            </button>
+        </header>
+
+        <div class="filters">
+            <input type="text" id="buscarProducto" placeholder="Buscar producto..." onkeyup="filtrarProductos()">
+            <select id="filtroCategoria" onchange="filtrarProductos()">
+                <option value="">Todas las categorías</option>
+            </select>
+            <select id="filtroEstado" onchange="filtrarProductos()">
+                <option value="">Todos los estados</option>
+                <option value="activo">Activo</option>
+                <option value="inactivo">Inactivo</option>
+                <option value="agotado">Agotado</option>
+            </select>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Nombre</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                        <th>Categorías</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaProductos">
+                    <!-- Se llena dinámicamente con JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination" id="paginacion">
+            <!-- Se llena dinámicamente con JavaScript -->
+        </div>
+    </main>
+
+    <!-- Modal para crear/editar producto -->
+    <div id="modalProducto" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModalProducto()">&times;</span>
+            <h2 id="modalTitulo">Nuevo Producto</h2>
+            
+            <form id="formProducto" onsubmit="guardarProducto(event)">
+                <input type="hidden" id="idProducto">
+                
+                <div class="form-group">
+                    <label for="nombre">Nombre del producto</label>
+                    <input type="text" id="nombre" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="descripcion">Descripción</label>
+                    <textarea id="descripcion" required></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="precio">Precio</label>
+                        <input type="number" id="precio" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="stock">Stock</label>
+                        <input type="number" id="stock" min="0" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="estado">Estado</label>
+                    <select id="estado" required>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                        <option value="agotado">Agotado</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="categorias">Categoría</label>
+                    <select id="categorias" required>
+                        <option value="" disabled selected>Seleccione una categoría</option>
+                        <!-- Se llena dinámicamente con JavaScript -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="imagen">Imagen del producto</label>
+                    <label for="imagen" class="file-input-label">
+                        <i class="fas fa-upload"></i> Seleccionar archivo
+                    </label>
+                    <input type="file" id="imagen" accept="image/*" onchange="previsualizarImagen(event)">
+                    <div class="image-preview-container">
+                        <img id="imagenPreview" src="/img/placeholder.png" alt="Vista previa">
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModalProducto()">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar Producto
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/admin/auth.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+    <script src="/js/admin/productos.js"></script>
+</body>
+</html>

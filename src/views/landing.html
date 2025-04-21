@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tienda - Página Principal</title>
+    <link rel="stylesheet" href="/styles/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+<body>
+    <header class="barraSuperior">
+        <nav class="barraNavegacion">
+            <ul>
+                <li><a href="productos.html" class="enlaceNav">PRODUCTOS</a></li>
+            </ul>
+            <div class="logo">rhode</div>
+            <ul>
+                <li>
+                    <a href="#" class="enlaceNav" id="btnCarrito">
+                        CARRITO (<span id="cantidadCarrito">0</span>)
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section class="bannerPrincipal" id="bannerPrincipal">
+            <!-- Banner dinámico -->
+        </section>
+        <section class="productosDestacados" id="productosDestacados">
+            <!-- Productos destacados -->
+        </section>
+    </main>
+    <!-- Modal del carrito -->
+    <div id="modalCarrito" class="modal">
+        <div class="modal-content modern-cart">
+            <div class="modern-cart-header">
+                <span class="close">&times;</span>
+                <span class="modern-cart-title"><span id="cantidadArticulos">0</span> artículo(s)</span>
+            </div>
+            <div id="items-carrito" class="modern-cart-items">
+                <!-- Los items del carrito se cargarán aquí -->
+            </div>
+            <div class="modern-cart-footer">
+                <div class="modern-cart-total-row">
+                    <span>total parcial</span>
+                    <span id="total-amount">Q. 0.00</span>
+                </div>
+                <button class="modern-cart-btn-checkout">VERIFICAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script>cargarLanding();</script>
+</body>
+</html>
