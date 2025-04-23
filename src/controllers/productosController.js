@@ -36,17 +36,14 @@ const upload = multer({
 // Obtener todos los productos
 async function obtenerProductos(req, res) {
     try {
-        // Usar la función centralizada del repositorio
-        const productos = await db.obtenerTodosProductos();
-        
         // Verificar si la solicitud viene del panel admin o de la tienda pública
         const esAdmin = req.path.includes('/admin/');
-        
+        let productos;
         if (esAdmin) {
-            // Formato para el panel administrativo (objeto con propiedad 'productos')
+            productos = await db.obtenerTodosProductosAdmin();
             res.json({ productos: productos });
         } else {
-            // Formato para la tienda pública (array directo)
+            productos = await db.obtenerTodosProductos();
             res.json(productos);
         }
     } catch (error) {

@@ -1,1 +1,5 @@
 node_modules
+
+# Ignorar imágenes de productos subidas por usuarios
+/public/uploads/productos/*
+!/public/uploads/productos/.gitkeep

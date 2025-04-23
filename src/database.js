@@ -19,6 +19,24 @@ pool.getConnection()
     });
 
 // ============================================
+// HELPERS
+// ============================================
+
+/**
+ * Normaliza los campos numéricos de un producto.
+ * Convierte precio y stock a tipo numérico para cálculos y visualización.
+ * @param {Object} producto 
+ * @returns {Object}
+ */
+function normalizarProducto(producto) {
+    return {
+        ...producto,
+        precio: producto.precio ? parseFloat(producto.precio) : 0,
+        stock: producto.stock ? parseInt(producto.stock) : 0
+    };
+}
+
+// ============================================
 // REPOSITORIO DE PRODUCTOS
 // ============================================
 
@@ -26,6 +44,7 @@ pool.getConnection()
  * Obtiene todos los productos con su información de categorías
  * @returns {Promise<Array>} Lista de productos
  */
+// Obtiene productos para la tienda pública (solo activos y con stock)
 async function obtenerTodosProductos() {
     try {
         const [productos] = await pool.query(`
@@ -33,9 +52,8 @@ async function obtenerTodosProductos() {
             FROM productos p
             LEFT JOIN producto_categoria pc ON p.id_producto = pc.id_producto
             LEFT JOIN categorias c ON pc.id_categoria = c.id_categoria
+            WHERE p.estado = 'Activo' AND p.stock > 0
         `);
-        
-        // Convertir campos numéricos a su tipo correcto para que funcionen métodos como toFixed()
         return productos.map(producto => ({
             ...producto,
             precio: producto.precio ? parseFloat(producto.precio) : 0,
@@ -43,6 +61,26 @@ async function obtenerTodosProductos() {
         }));
     } catch (error) {
         console.error('Error en repository - obtenerTodosProductos:', error);
+        throw error;
+    }
+}
+
+// Obtiene todos los productos (sin filtro) para el panel admin
+async function obtenerTodosProductosAdmin() {
+    try {
+        const [productos] = await pool.query(`
+            SELECT p.*, c.nombre as categoria_nombre, c.id_categoria
+            FROM productos p
+            LEFT JOIN producto_categoria pc ON p.id_producto = pc.id_producto
+            LEFT JOIN categorias c ON pc.id_categoria = c.id_categoria
+        `);
+        return productos.map(producto => ({
+            ...producto,
+            precio: producto.precio ? parseFloat(producto.precio) : 0,
+            stock: producto.stock ? parseInt(producto.stock) : 0
+        }));
+    } catch (error) {
+        console.error('Error en repository - obtenerTodosProductosAdmin:', error);
         throw error;
     }
 }
@@ -76,13 +114,8 @@ async function obtenerProductoPorId(idProducto) {
             return null;
         }
         
-        // Convertir campos numéricos a su tipo correcto
-        const producto = productos[0];
-        return {
-            ...producto,
-            precio: producto.precio ? parseFloat(producto.precio) : 0,
-            stock: producto.stock ? parseInt(producto.stock) : 0
-        };
+        // Normalizar campos numéricos del producto encontrado
+        return normalizarProducto(productos[0]);
     } catch (error) {
         console.error(`Error en repository - obtenerProductoPorId(${idProducto}):`, error);
         throw error;
@@ -144,12 +177,7 @@ async function obtenerTodasCategorias() {
                 c.nombre
         `);
         
-        // Para debugging
-        console.log('Categorias de la base de datos:', categorias.map(c => ({ 
-            nombre: c.nombre, 
-            estado: c.estado, 
-            tipo: typeof c.estado 
-        })));
+        // Normaliza el estado y el conteo de productos asociados a cada categoría
         
          return categorias.map(categoria => {
 
@@ -199,8 +227,8 @@ async function obtenerCategoriaPorId(id) {
 async function crearCategoria(categoria) {
     try {
         const [result] = await pool.query(
-            'INSERT INTO categorias (nombre, descripcion) VALUES (?, ?)',
-            [categoria.nombre, categoria.descripcion]
+            'INSERT INTO categorias (nombre, descripcion, estado) VALUES (?, ?, ?)',
+            [categoria.nombre, categoria.descripcion, categoria.estado === '1' || categoria.estado === 1 || categoria.estado === true ? 1 : 0]
         );
         return {
             id: result.insertId,
@@ -448,42 +476,54 @@ async function eliminarProducto(idProducto) {
         await connection.beginTransaction();
         console.log('Eliminando producto ID:', idProducto);
         
-        // Obtener la información del producto antes de eliminarlo para borrar la imagen
+        // Obtener la información del producto antes de eliminarlo para borrar la(s) imagen(es)
         const [producto] = await connection.query(
             'SELECT imagen FROM productos WHERE id_producto = ?',
             [idProducto]
         );
-        
+
         if (!producto || producto.length === 0) {
             throw new Error(`El producto con ID ${idProducto} no existe`);
         }
-        
+
         // Eliminar relaciones de categoría
         await connection.query(
             'DELETE FROM producto_categoria WHERE id_producto = ?',
             [idProducto]
         );
-        
+
         // Eliminar el producto
         const [resultado] = await connection.query(
             'DELETE FROM productos WHERE id_producto = ?',
             [idProducto]
         );
-        
+
         if (resultado.affectedRows === 0) {
             throw new Error(`No se pudo eliminar el producto con ID ${idProducto}`);
         }
-        
-        // Eliminar la imagen del producto si existe
+
+        // Eliminar TODAS las imágenes asociadas al producto en uploads/productos
         if (producto[0]?.imagen) {
             try {
-                const imagePath = path.join(__dirname, '../public', producto[0].imagen);
-                await fs.unlink(imagePath).catch((err) => {
-                    console.log('No se pudo eliminar la imagen, posiblemente no existe:', imagePath, err);
-                });
+                const fsPromises = require('fs').promises;
+                const pathUploads = path.resolve(__dirname, '..', 'public', 'uploads', 'productos');
+                // Si hay varias imágenes separadas por ',' las eliminamos todas
+                const imagenes = producto[0].imagen.split(',').map(img => img.trim()).filter(Boolean);
+                for (const img of imagenes) {
+    // Elimina el prefijo '/uploads/productos/' o 'uploads/productos/' si existe
+    let fileName = img.replace(/^\/?uploads\/productos\//, '');
+    const imagePath = path.join(pathUploads, fileName);
+    try {
+        await fsPromises.access(imagePath); // Verifica si existe
+        await fsPromises.unlink(imagePath);
+        console.log('Imagen eliminada:', imagePath);
+    } catch (err) {
+        console.log('La imagen no existe o no se pudo eliminar:', imagePath);
+    }
+}
             } catch (err) {
                 // Continuar aunque no se pueda eliminar la imagen
-                console.log('Error al eliminar imagen:', err.message);
+                console.log('Error al eliminar imagen(es):', err.message);
             }
         }
         
@@ -616,35 +656,20 @@ function generarNumeroAleatorio(longitud) {
  */
 async function verificarNumeroReferenciaExiste(numeroRef) {
     try {
-        // Primero verificar si la tabla existe
+        // Verifica existencia de la tabla y del número de referencia
         const [tablas] = await pool.query(
             "SHOW TABLES LIKE 'transacciones_bancarias'"
         );
-        
-        // Si la tabla no existe, no puede haber duplicados
-        if (tablas.length === 0) {
-            console.log('La tabla transacciones_bancarias aún no existe, no hay duplicados');
-            return false;
-        }
-        
-        // Verificar en la tabla de transacciones bancarias
+        if (tablas.length === 0) return false;
         const [transacciones] = await pool.execute(
             'SELECT 1 FROM transacciones_bancarias WHERE numero_referencia = ? LIMIT 1',
             [numeroRef]
         );
-        
         return transacciones.length > 0;
     } catch (error) {
-        console.error('Error al verificar número de referencia:', error);
-        console.log('Tipo de error:', error.code);
-        
-        // Si el error es que la tabla no existe, retornamos false (no hay duplicados)
-        if (error.code === 'ER_NO_SUCH_TABLE') {
-            console.log('La tabla no existe, no hay duplicados');
-            return false;
-        }
-        
-        return false; // En caso de cualquier otro error, asumimos que no existe
+        // Si el error es por tabla inexistente, asumimos que no hay duplicados
+        if (error.code === 'ER_NO_SUCH_TABLE') return false;
+        return false;
     }
 }
 
@@ -660,6 +685,7 @@ module.exports = {
     crearProducto,
     actualizarProducto,
     eliminarProducto,
+    obtenerTodosProductosAdmin,
     
     // Funciones de categorías
     obtenerTodasCategorias,

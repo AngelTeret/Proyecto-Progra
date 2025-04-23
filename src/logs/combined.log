@@ -8,3 +8,39 @@
 [2025-04-21T08:58:06.701Z] info: Respuesta banco | Estado: 01 | Descripción: 202504210258060101000101019902314950100001525000099246508603301
 [2025-04-21T08:58:06.702Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 139922467083 | Cliente: Henry Angel Gabriel
 [2025-04-21T08:58:06.704Z] info: Transacción exitosa | Referencia: 139922467083 | Cliente: Henry Angel Gabriel | Monto: 1525
+[2025-04-22T02:46:16.841Z] info: Inicio de pago | Cliente: Henry Angel Gabriel | Monto: 8355 | Trama: 202504212046160101000101019902314950100008355000061649875367900
+[2025-04-22T02:46:16.851Z] info: Datos de trama extraídos | Referencia: 616498753679 | Cliente: Henry Angel Gabriel
+[2025-04-22T02:46:17.467Z] info: Respuesta banco | Estado: 01 | Descripción: 202504212046170101000101019902314950100008355000061649875367901
+[2025-04-22T02:46:17.468Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 845978646238 | Cliente: Henry Angel Gabriel
+[2025-04-22T02:46:17.473Z] info: Transacción exitosa | Referencia: 845978646238 | Cliente: Henry Angel Gabriel | Monto: 8355
+[2025-04-22T02:52:38.685Z] info: Inicio de pago | Cliente: Henry Angel Gabriel | Monto: 525 | Trama: 20250421205238010100010A019902314930100000525000031248755964300
+[2025-04-22T02:52:38.690Z] info: Datos de trama extraídos | Referencia: 312487559643 | Cliente: Henry Angel Gabriel
+[2025-04-22T02:52:38.921Z] error: Error crítico al procesar pago: No se pudo encontrar una respuesta válida del banco
+[2025-04-22T02:53:54.398Z] info: Inicio de pago | Cliente: Henry Angel Gabriel | Monto: 525 | Trama: 20250421205354010100010A019902314910100000525000090514233263400
+[2025-04-22T02:53:54.399Z] info: Datos de trama extraídos | Referencia: 905142332634 | Cliente: Henry Angel Gabriel
+[2025-04-22T02:53:54.536Z] error: Error crítico al procesar pago: No se pudo encontrar una respuesta válida del banco
+[2025-04-23T04:26:27.382Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 2525 | Trama: 202504222226270101000101019902314950100002525000043142682625200
+[2025-04-23T04:26:27.394Z] info: Datos de trama extraídos | Referencia: 431426826252 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:26:28.068Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222226280101000101019902314950100002525000043142682625201
+[2025-04-23T04:26:28.068Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 163536144099 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:26:28.073Z] info: Transacción exitosa | Referencia: 163536144099 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 2525
+[2025-04-23T04:48:57.057Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1680 | Trama: 202504222248570101000101019902314950100001680000062272486408300
+[2025-04-23T04:48:57.069Z] info: Datos de trama extraídos | Referencia: 622724864083 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:48:57.303Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222248570101000101019902314950100001680000062272486408301
+[2025-04-23T04:48:57.304Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 865040262556 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:48:57.307Z] info: Transacción exitosa | Referencia: 865040262556 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1680
+[2025-04-23T04:55:03.076Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 9000 | Trama: 202504222255030101000101019902314950100009000000048001385505300
+[2025-04-23T04:55:03.088Z] info: Datos de trama extraídos | Referencia: 480013855053 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:55:03.317Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222255030101000101019902314950100009000000048001385505301
+[2025-04-23T04:55:03.318Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 692656893590 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:55:03.321Z] info: Transacción exitosa | Referencia: 692656893590 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 9000
+[2025-04-23T05:03:40.304Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1000 | Trama: 202504222303400101000101019902314950100001000000073303494265900
+[2025-04-23T05:03:40.314Z] info: Datos de trama extraídos | Referencia: 733034942659 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T05:03:40.529Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222303400101000101019902314950100001000000073303494265901
+[2025-04-23T05:03:40.530Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 254434989598 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T05:03:40.533Z] info: Transacción exitosa | Referencia: 254434989598 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1000
+[2025-04-23T06:02:42.969Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1050 | Trama: 202504230002420101000101019902314950100001050000020316831571800
+[2025-04-23T06:02:42.973Z] info: Datos de trama extraídos | Referencia: 203168315718 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T06:02:43.116Z] info: Respuesta banco | Estado: 01 | Descripción: 202504230002430101000101019902314950100001050000020316831571801
+[2025-04-23T06:02:43.117Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 282688193448 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T06:02:43.119Z] info: Transacción exitosa | Referencia: 282688193448 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1050

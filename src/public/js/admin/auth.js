@@ -3,8 +3,8 @@
 // Verificar si hay token guardado
 function verificarAutenticacion() {
     const token = localStorage.getItem('adminToken');
-    if (!token && !window.location.href.includes('login.html')) {
-        window.location.href = '/views/admin/login.html';
+    if (!token && !window.location.href.includes('/admin/login')) {
+        window.location.href = '/admin/login';
         return false;
     }
     return true;
@@ -36,7 +36,7 @@ async function iniciarSesion(event) {
             console.log('Login exitoso'); // Log para debugging
             localStorage.setItem('adminToken', data.token);
             localStorage.setItem('adminNombre', data.nombre);
-            window.location.href = '/views/admin/dashboard.html';
+            window.location.href = '/admin/productos';
         } else {
             console.log('Error en login:', data); // Log para debugging
             mostrarError(data.mensaje || data.error || 'Error al iniciar sesión');

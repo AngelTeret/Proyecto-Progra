@@ -35,32 +35,28 @@ router.get('/api/landing', async (req, res) => {
 
 
 
-// Ruta para la página del carrito
-router.get('/carrito.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/carrito.html'));
-});
-
-// Página principal - landing page
+// --- VISTAS PRINCIPALES (solo rutas limpias, sin .html) ---
 router.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/landing.html'));
 });
-
-// Página de productos
+router.get('/carrito', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/carrito.html'));
+});
 router.get('/productos', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/productos.html'));
 });
-
-router.get('/productos.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/productos.html'));
-});
-
-// Página de pago
 router.get('/pago', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/pago.html'));
 });
 
-router.get('/pago.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/pago.html'));
+// Redirección automática si intentan acceder con .html a la ruta limpia
+router.get(['/:page.html'], (req, res) => {
+    const page = req.params.page;
+    const allowed = ['productos', 'carrito', 'pago'];
+    if (allowed.includes(page)) {
+        return res.redirect('/' + page);
+    }
+    res.status(404).send('Página no encontrada');
 });
 
 // API de procesamiento de pago
@@ -92,9 +88,18 @@ router.use('/js', express.static(path.join(__dirname, 'public/js')));
 router.use('/styles', express.static(path.join(__dirname, 'public/styles')));
 router.use('/img', express.static(path.join(__dirname, 'public/img')));
 
-// Servir vistas del panel admin
-router.get('/views/admin/*', (req, res) => {
-    res.sendFile(path.join(__dirname, req.url));
+// Rutas limpias para vistas admin
+router.get('/admin/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/login.html'));
+});
+router.get('/admin/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/dashboard.html'));
+});
+router.get('/admin/productos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/productos.html'));
+});
+router.get('/admin/categorias', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/categorias.html'));
 });
 
 // Rutas de la API para categorías

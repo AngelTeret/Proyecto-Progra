@@ -1,35 +1,40 @@
-// Variables globales
+// Variables globales para el manejo del carrito y modales
 let carrito = [];
 let modal;
 let btnCarrito;
 let btnCerrar;
 
 // Inicializar elementos cuando el DOM esté cargado
+// Inicializa elementos y listeners cuando el DOM está listo
+// Configura el flujo principal del carrito y la navegación
+// Permite alternar logs de desarrollo mediante el flag DEBUG
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM cargado - Inicializando carrito');
+    const DEBUG = false; // Flag para habilitar/deshabilitar logs de desarrollo
+    if (DEBUG) console.log('DOM cargado - Inicializando carrito');
     
-    // Cargar carrito desde localStorage
+    // Sincroniza el carrito inicial desde localStorage para mantener persistencia entre recargas
     carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    console.log('Carrito cargado:', carrito);
+    if (DEBUG) console.log('Carrito cargado:', carrito);
     
-    // Referencias a elementos del DOM
+    // Obtiene referencias a los elementos clave de la interfaz para el flujo de carrito/modal
     modal = document.getElementById('modalCarrito');
     btnCarrito = document.getElementById('btnCarrito');
     btnCerrar = document.querySelector('.close');
     const btnVerificar = document.querySelector('.modern-cart-btn-checkout');
     
-    // Event listeners
+    // Listeners para interacción con el carrito y navegación
     if (btnCarrito) {
         btnCarrito.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('Botón carrito clickeado');
+            if (DEBUG) console.log('Botón carrito clickeado');
             abrirModalCarrito();
         });
     }
     
     if (btnCerrar) {
         btnCerrar.addEventListener('click', function() {
-            console.log('Cerrar modal');
+            if (DEBUG) console.log('Cerrar modal');
             cerrarModalCarrito();
         });
     }
@@ -37,58 +42,55 @@ document.addEventListener('DOMContentLoaded', function() {
     // Agregar listener al botón VERIFICAR
     if (btnVerificar) {
         btnVerificar.addEventListener('click', function() {
-            console.log('Redirigiendo a página de pago...');
+            if (DEBUG) console.log('Redirigiendo a página de pago...');
             cerrarModalCarrito(); // Cerrar el modal del carrito primero
             // Asegurarse de usar la ruta correcta configurada en Express
             window.location.href = '/pago';
         });
     } else {
-        console.warn('No se encontró el botón de verificar');
+        if (DEBUG) console.warn('No se encontró el botón de verificar');
     }
     
-    // Asegurarnos de que se actualicen los botones del carrito cuando cambia
+    // Inicializa el estado visual del carrito al cargar la página
     actualizarCarritoModal();
     actualizarContadorCarrito();
     
+    // Permite cerrar el modal del carrito haciendo clic fuera de él
     window.addEventListener('click', function(event) {
         if (event.target === modal) {
             cerrarModalCarrito();
         }
     });
     
-    // Cargar productos
+    // Carga inicial de productos en la página de productos
     cargarProductos();
     
-    // Actualizar contador y modal del carrito
+    // Refuerza la sincronización visual del carrito tras carga inicial
     actualizarContadorCarrito();
     actualizarCarritoModal();
     
-    // Monitoreo optimizado del carrito
-    console.log('Configurando monitoreo del carrito');
+    // Monitoreo periódico del carrito para detectar y reflejar cambios hechos en otras pestañas o ventanas
+    if (DEBUG) console.log('Configurando monitoreo del carrito');
     let ultimoEstadoCarrito = localStorage.getItem('carrito') || '[]';
     
-    // Usar un intervalo más largo para verificar el carrito (2 segundos en lugar de 0.5)
     const intervaloMonitoreoCarrito = setInterval(function() {
         const estadoActual = localStorage.getItem('carrito') || '[]';
-        
-        // Solo actualizar si hay un cambio real y no loguear si el carrito está vacío
+        // Solo actualiza la UI si el carrito cambió realmente
         if (ultimoEstadoCarrito !== estadoActual) {
             carrito = JSON.parse(estadoActual);
-            
-            // Reducir logs innecesarios cuando el carrito está vacío
-            if (carrito.length > 0) {
+            if (carrito.length > 0 && DEBUG) {
                 console.log('Sincronizando carrito con localStorage');
             }
-            
             actualizarContadorCarrito();
             actualizarCarritoModal();
             ultimoEstadoCarrito = estadoActual;
         }
-    }, 2000); // Verificar cada 2 segundos
+    }, 2000); // Intervalo de 2 segundos para eficiencia
 });
 
 
 // Funciones del carrito
+// Agrega un producto al carrito, validando stock y mostrando feedback al usuario
 function agregarAlCarrito(idProducto) {
     console.log('Agregando producto al carrito:', idProducto);
     fetch(`/api/productos/${idProducto}`)
@@ -185,6 +187,7 @@ function agregarAlCarrito(idProducto) {
         });
 }
 
+// Cambia la cantidad de un producto en el carrito, respetando límites de stock
 function cambiarCantidad(idProducto, cambio) {
     console.log('Cambiando cantidad:', idProducto, 'cambio:', cambio);
     
@@ -224,6 +227,7 @@ function cambiarCantidad(idProducto, cambio) {
     actualizarContadorCarrito();
 }
 
+// Elimina un producto del carrito y actualiza la UI
 function eliminarDelCarrito(idProducto) {
     console.log('Eliminando producto del carrito:', idProducto);
     
@@ -238,6 +242,7 @@ function eliminarDelCarrito(idProducto) {
 }
 
 // Funciones del modal
+// Abre el modal del carrito y lo posiciona visualmente según la barra de navegación
 function abrirModalCarrito() {
     actualizarCarritoModal();
     if (modal) {
@@ -266,11 +271,13 @@ function abrirModalCarrito() {
     }
 }
 
+// Cierra el modal del carrito
 function cerrarModalCarrito() {
     if (modal) modal.style.display = 'none';
 }
 
 // Función para actualizar todos los contadores del carrito de forma consistente
+// Actualiza todos los contadores visuales del carrito en la UI
 function actualizarContadorCarrito() {
     // Calculamos el total de items una sola vez
     const totalItems = carrito.reduce((total, item) => total + item.cantidad, 0);
@@ -302,6 +309,7 @@ function actualizarContadorCarrito() {
 }
 
 // Actualiza el modal del carrito con los productos actuales
+// Renderiza el contenido del modal del carrito con los productos actuales
 function actualizarCarritoModal() {
     // Cambiar a usar el selector correcto que coincide con el HTML
     const itemsCarrito = document.getElementById('items-carrito');
@@ -365,7 +373,7 @@ function actualizarCarritoModal() {
                     </div>
                 </div>
                 <div class="modern-cart-item-right">
-                    <div class="modern-cart-item-price">Q. ${item.precio.toFixed(2)}</div>
+                    <div class="modern-cart-item-price">Q. ${(item.precio * item.cantidad).toFixed(2)}</div>
                     <button class="modern-cart-item-delete" onclick="eliminarDelCarrito(${item.id_producto})">ELIMINAR</button>
                 </div>
             </div>
@@ -390,6 +398,7 @@ function actualizarCarritoModal() {
 
 
 // LANDING: carga banner y productos destacados
+// Carga dinámicamente el banner y los productos destacados en la landing page
 function cargarLanding() {
     actualizarContadorCarrito();
     fetch('/api/landing')
@@ -399,6 +408,7 @@ function cargarLanding() {
             mostrarProductosDestacados(datos.productosDestacados);
         });
 }
+// Renderiza el banner principal en la landing page
 function mostrarBanner(listaBanner) {
     const contenedor = document.getElementById('bannerPrincipal');
     if (!contenedor || !listaBanner.length) return;
@@ -409,6 +419,7 @@ function mostrarBanner(listaBanner) {
         <button class="botonComprar" onclick="window.location='productos.html'">COMPRAR AHORA</button>
     `;
 }
+// Renderiza los productos destacados en la landing page
 function mostrarProductosDestacados(listaProductos) {
     const contenedor = document.getElementById('productosDestacados');
     if (!contenedor) return;
@@ -424,6 +435,7 @@ function mostrarProductosDestacados(listaProductos) {
 }
 
 // PRODUCTOS: carga galería de productos
+// Carga y renderiza la galería de productos en la página de productos
 async function cargarProductos() {
     try {
         actualizarContadorCarrito();
@@ -480,6 +492,7 @@ async function cargarProductos() {
 }
 
 // CARRITO: carga productos del carrito y sugerencias
+// Renderiza el resumen del carrito en la página de carrito
 function cargarCarrito() {
     actualizarCantidadCarrito();
     // Aquí se simula el carrito con localStorage
@@ -505,6 +518,7 @@ function cargarCarrito() {
 }
 
 // PAGO: muestra formulario y resumen
+// Renderiza el resumen de compra y formulario de pago en la página de pago
 function cargarPago() {
     // Asegurar que estamos usando la versión más actualizada del carrito
     carrito = JSON.parse(localStorage.getItem('carrito')) || [];
@@ -566,216 +580,62 @@ function cargarPago() {
     
     // Actualizar el contenido del resumen
     resumen.innerHTML = html;
-
 }
 
-// Función que se llama al hacer clic en FINALIZAR COMPRA
+// Envía los datos del formulario y carrito al backend para procesar el pago
 function enviarPago(event) {
     event.preventDefault();
-    console.log('Iniciando proceso de envío de pago');
-    
-    // Validar que todos los campos del formulario de contacto estén completos
-    const contactForm = document.getElementById('contactForm');
-    
-    // Si el formulario existe y tiene campos requeridos, verificarlos
-    if (contactForm) {
-        // Usar el atributo required de los inputs para validar
-        const camposRequeridos = contactForm.querySelectorAll('[required]');
-        let formValido = true;
-        
-        // Comprobar cada campo requerido
-        camposRequeridos.forEach(campo => {
-            if (!campo.value.trim()) {
-                formValido = false;
-                // Marcar visualmente el campo como inválido
-                campo.style.borderColor = 'red';
-                // Restaurar el estilo cuando el usuario escriba
-                campo.addEventListener('input', function() {
-                    this.style.borderColor = '';
-                });
-            }
-        });
-        
-        // Si algún campo está vacío, mostrar mensaje y detener
-        if (!formValido) {
-            Swal.fire({
-                title: 'Información incompleta',
-                text: 'Por favor completa todos los campos de contacto antes de continuar',
-                icon: 'warning',
-                confirmButtonText: 'Entendido'
-            });
-            return; // Detener la ejecución
-        }
-    }
-    
-    // Si pasó la validación, mostrar el modal de pago
-    const modal = document.getElementById('modalPago');
-    modal.style.display = 'block';
-    
-    // Generar un número de referencia aleatorio si no existe
-    if (!document.getElementById('numeroReferencia').value) {
-        document.getElementById('numeroReferencia').value = generarNumeroReferencia();
-    }
-    
-    // Asegurar que el botón X cierre el modal
-    const cerrarBtn = document.querySelector('.cerrar-modal');
-    if (cerrarBtn) {
-        cerrarBtn.addEventListener('click', function() {
-            document.getElementById('modalPago').style.display = 'none';
-        });
-    }
-    
-    // Vincular el botón de procesar pago a la función correspondiente
-    const btnProcesarPago = document.getElementById('btnProcesarPago');
-    if (btnProcesarPago) {
-        // Eliminamos eventos previos para evitar duplicaciones
-        const nuevoBtn = btnProcesarPago.cloneNode(true);
-        btnProcesarPago.parentNode.replaceChild(nuevoBtn, btnProcesarPago);
-        
-        // Añadimos el nuevo listener
-        nuevoBtn.addEventListener('click', function() {
-            console.log('Botón PROCESAR PAGO clickeado');
-            procesarPagoConBanco();
-        });
-    } else {
-        console.error('No se encontró el botón para procesar el pago');
-    }
-}
 
-// Generar un número de referencia único de 12 dígitos
-function generarNumeroReferencia() {
-    return Math.floor(Math.random() * 900000000000 + 100000000000).toString();
-}
-
-// Procesar el pago con el banco
-function procesarPagoConBanco() {
-    console.log('Iniciando procesamiento de pago');
-    
-    // Obtener todos los datos del formulario
+    // Obtener datos del formulario de contacto
+    const nombre = document.getElementById('nombrePila').value.trim();
+    const apellido = document.getElementById('apellido').value.trim();
+    const direccion = document.getElementById('direccion').value.trim();
+    const correo = document.getElementById('correo').value.trim();
+    const telefono = document.getElementById('telefono').value.trim();
+    // Obtener datos de selección de pago
     const tipoTransaccion = document.getElementById('tipoTransaccion').value;
     const canalTerminal = document.getElementById('canalTerminal').value;
-    const idEmpresa = document.getElementById('idEmpresa').value;
-    const idSucursal = document.getElementById('idSucursal').value;
-    const codigoCliente = document.getElementById('codigoCliente').value;
-    const tipoMoneda = document.getElementById('tipoMoneda').value;
-    const numeroReferencia = document.getElementById('numeroReferencia').value;
-    
-    console.log('Datos del formulario obtenidos:', {
-        tipoTransaccion, canalTerminal, idEmpresa,
-        idSucursal, codigoCliente, tipoMoneda, numeroReferencia
-    });
-    
-    // Validar que todos los campos estén completos
-    if (!codigoCliente || codigoCliente.length !== 10 || !/^\d+$/.test(codigoCliente)) {
-        alert('Por favor ingrese un código de cliente válido de 10 dígitos numéricos');
-        console.error('Validación fallida: código cliente inválido', codigoCliente);
-        return;
-    }
-    console.log('Validación de código cliente correcta');
-    
-    if (!numeroReferencia || numeroReferencia.length !== 12 || !/^\d+$/.test(numeroReferencia)) {
-        alert('Por favor ingrese un número de referencia válido de 12 dígitos numéricos');
-        console.error('Validación fallida: número de referencia inválido', numeroReferencia);
-        return;
-    }
-    console.log('Validación de número de referencia correcta');
-    
-    // Obtener el total del carrito con 2 decimales, formateado como string de 10 caracteres
+    // Obtener datos del carrito
     const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+    // Obtener total
     let total = 0;
     carrito.forEach(item => {
-        total += item.precio * item.cantidad;
+        total += (item.precio * item.cantidad);
     });
-    
-    // Formatear el monto para la trama (10 caracteres, incluyendo 2 decimales)
-    const montoFormateado = formatearMonto(total);
-    
-    // Mostrar sección de procesamiento
-    document.getElementById('modalPagoForm').querySelector('button').style.display = 'none';
-    document.getElementById('resultado-transaccion').classList.remove('hidden');
-    document.querySelector('.procesando-pago').style.display = 'flex';
-    document.querySelector('.resultado-final').classList.add('hidden');
-    
-    // Generar la trama para el banco
-    const trama = generarTramaBancaria(
+    // Construir el objeto de datos para el backend
+    const datosPago = {
         tipoTransaccion,
         canalTerminal,
-        idEmpresa,
-        idSucursal,
-        codigoCliente,
-        tipoMoneda,
-        montoFormateado,
-        numeroReferencia
-    );
-    
-    console.log('Trama generada:', trama);
-    console.log('Longitud de la trama:', trama.length);
-    
-    console.log('Preparando para enviar trama al banco...');
-    console.log('Total a cobrar:', total);
-    
-    // Enviar la trama al banco inmediatamente (sin setTimeout)
-    apiService.enviarTramaAlBanco(trama, total)
-        .then(respuesta => {
-            console.log('Respuesta recibida del banco:', respuesta);
-            mostrarResultadoTransaccion(respuesta);
-        })
-        .catch(error => {
-            console.error('Error en comunicación con el banco:', error);
-            mostrarErrorTransaccion(error);
-        });
-}
-
-// Formatear el monto para la trama (10 caracteres con 2 decimales)
-function formatearMonto(monto) {
-    // Multiplicar por 100 para eliminar el punto decimal y obtener céntimos
-    const centimos = Math.round(monto * 100);
-    // Convertir a string y rellenar con ceros a la izquierda hasta tener 10 caracteres
-    return centimos.toString().padStart(10, '0');
-}
-
-// Generar la trama completa según las especificaciones del banco (63 caracteres)
-function generarTramaBancaria(tipoTransaccion, canalTerminal, idEmpresa, idSucursal, codigoCliente, tipoMoneda, monto, numeroReferencia) {
-    // Obtener la fecha y hora actual en formato yyyyMMddHHmmss (14 caracteres)
-    const ahora = new Date();
-    const fechaHora = ahora.getFullYear() +
-                     ('0' + (ahora.getMonth() + 1)).slice(-2) +
-                     ('0' + ahora.getDate()).slice(-2) +
-                     ('0' + ahora.getHours()).slice(-2) +
-                     ('0' + ahora.getMinutes()).slice(-2) +
-                     ('0' + ahora.getSeconds()).slice(-2);
-    
-    // Formatear código cliente a 11 dígitos (el banco requiere 11 dígitos)
-    const codigoClienteFormateado = codigoCliente.padStart(11, '0');
-    
-    // Separar monto en entero y decimal (10 dígitos para entero + 2 dígitos para decimal)
-    const montoFloat = parseFloat(monto);
-    const montoStr = montoFloat.toFixed(2); // Asegurar 2 decimales
-    const [parteEntera, parteDecimal] = montoStr.split('.');
-    const montoEntero = parteEntera.padStart(10, '0');
-    const montoDecimal = parteDecimal.padStart(2, '0');
-    
-    // El estado siempre es '00' al enviar (2 caracteres)
-    const estado = '00';
-    
-    // Unir todos los componentes de la trama (Total 63 caracteres)
-    // 14 + 2 + 2 + 4 + 2 + 11 + 2 + 10 + 2 + 12 + 2 = 63
-    const tramaCompleta = fechaHora + tipoTransaccion + canalTerminal + idEmpresa + idSucursal + 
-           codigoClienteFormateado + tipoMoneda + montoEntero + montoDecimal + numeroReferencia + estado;
-    
-    console.log('Longitud de la trama generada:', tramaCompleta.length);
-    return tramaCompleta;
-}
-
-// NOTA: Esta función ha sido reemplazada por apiService.enviarTramaAlBanco
-// y se mantiene solo por compatibilidad con código existente.
-// Ahora redirige las llamadas a apiService
-async function enviarTramaAlBanco(trama, montoTotal) {
-    console.log('Redirigiendo a apiService.enviarTramaAlBanco');
-    return await apiService.enviarTramaAlBanco(trama, montoTotal);
+        // Puedes agregar los campos requeridos por el backend aquí:
+        // idEmpresa, idSucursal, codigoCliente, tipoMoneda, numeroReferencia
+        montoTotal: total,
+        datosContacto: {
+            nombre,
+            apellido,
+            direccion,
+            correo,
+            telefono
+        },
+        carrito
+    };
+    // Enviar al backend para procesar el pago
+    fetch('/api/pago/procesar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(datosPago)
+    })
+    .then(res => res.json())
+    .then(respuesta => {
+        mostrarResultadoTransaccion(respuesta);
+    })
+    .catch(error => {
+        mostrarErrorTransaccion(error);
+    });
 }
 
 // Mostrar el resultado de la transacción usando SweetAlert2
+// Muestra el resultado de la transacción bancaria usando SweetAlert2
+// Proporciona feedback visual según el estado de la transacción
 function mostrarResultadoTransaccion(respuesta) {
     console.log('Mostrando resultado de la transacción:', respuesta);
     document.querySelector('.procesando-pago').style.display = 'none';
@@ -847,6 +707,7 @@ function mostrarResultadoTransaccion(respuesta) {
 }
 
 // Mostrar error en la transacción usando SweetAlert2
+// Muestra un mensaje de error si ocurre un fallo en la comunicación bancaria
 function mostrarErrorTransaccion(error) {
     console.error('Mostrando error de la transacción:', error);
     document.querySelector('.procesando-pago').style.display = 'none';
