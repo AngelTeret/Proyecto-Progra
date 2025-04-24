@@ -1,19 +1,26 @@
-// Configuración de la conexión a la base de datos
+// Configuración de conexión a la base de datos MySQL
 const DB_CONFIG = {
     host: 'localhost',
-    user: 'root',       // Debe ser 'user' para MySQL2
+    user: 'root',
     password: '',
-    database: 'chatapp', // Debe ser 'database' para MySQL2
+    database: 'chatapp',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 };
 
-// Configuración del banco
+// Configuración de conexión con el servidor del banco
 const BANCO_CONFIG = {
+<<<<<<< HEAD
     host: '192.168.1.33',  // Cambiado a localhost para pruebas locales
     puerto: 5000,
     // Valores por defecto para las tramas
+=======
+    host: '192.168.56.1',  // Dirección IP del servidor Java del banco
+    puerto: 5000,          // Puerto usado por el servidor del banco
+
+    // Valores por defecto usados al construir tramas bancarias
+>>>>>>> 0d0994551b2987f306a8d14ca2c9283742a30c31
     defaults: {
         tipoTransaccion: '01',
         canalTerminal: '04',
@@ -23,12 +30,12 @@ const BANCO_CONFIG = {
     }
 };
 
-// Configuración del servidor
+// Configuración del puerto en el que corre el servidor Express
 const SERVER_CONFIG = {
     port: 3000
 };
 
-// Exportar todas las configuraciones
+// Exportar las configuraciones para uso en otras partes del sistema
 module.exports = {
     DB_CONFIG,
     BANCO_CONFIG,

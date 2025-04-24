@@ -9,39 +9,50 @@
     <link rel="stylesheet" href="/styles/chat.css">
 </head>
 <body>
-    <div class="chat-container">
-        <div class="users-panel">
-            <div class="current-user">
-                <div class="user-avatar">
-                    <span></span>
-                </div>
-                <div class="user-info">
-                    <span id="currentUsername"></span>
-                </div>
-            </div>
-            <div class="users-list" id="usersList">
-                <!-- Users will be added here -->
-            </div>
-            <button class="logout-button" onclick="logout()">
-                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-            </button>
-        </div>
+    <div class="chat-container" style="max-width: 500px; margin: 40px auto;">
         <div class="chat-panel">
             <div class="chat-header">
-                <h2 id="selectedUser">Selecciona un usuario para chatear</h2>
+                <h2 id="chatTitle">Chat de Tramas Bancarias</h2>
+                <div style="font-size: 0.9em; color: #666;">Usuario: <span id="currentUsername"></span></div>
             </div>
             <div class="messages-container" id="messagesContainer">
                 <!-- Messages will be added here -->
             </div>
             <div class="input-container">
-                <input type="text" id="messageInput" class="message-input" placeholder="Selecciona un usuario para chatear..." disabled>
-                <button id="sendButton" class="send-button" onclick="sendMessage()" disabled>
+                <input type="text" id="messageInput" class="message-input" placeholder="Ingresa una trama bancaria de 63 dígitos...">
+                <button id="sendButton" class="send-button" onclick="sendMessage()">
                     <i class="fas fa-paper-plane"></i>
                 </button>
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/js/chat.js"></script>
+    <script>
+    // Pedir nombre de usuario si no existe en localStorage
+    document.addEventListener('DOMContentLoaded', function() {
+        let username = localStorage.getItem('chat_username');
+        if (!username) {
+            Swal.fire({
+                title: 'Ingresa tu nombre',
+                input: 'text',
+                inputLabel: 'Nombre para el chat',
+                inputPlaceholder: 'Tu nombre',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                inputValidator: (value) => {
+                    if (!value) return 'Debes ingresar un nombre';
+                }
+            }).then(result => {
+                username = result.value;
+                localStorage.setItem('chat_username', username);
+                document.getElementById('currentUsername').textContent = username;
+            });
+        } else {
+            document.getElementById('currentUsername').textContent = username;
+        }
+    });
+    </script>
 </body>
 </html>

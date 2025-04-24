@@ -8,6 +8,7 @@
 [2025-04-21T08:58:06.701Z] info: Respuesta banco | Estado: 01 | Descripción: 202504210258060101000101019902314950100001525000099246508603301
 [2025-04-21T08:58:06.702Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 139922467083 | Cliente: Henry Angel Gabriel
 [2025-04-21T08:58:06.704Z] info: Transacción exitosa | Referencia: 139922467083 | Cliente: Henry Angel Gabriel | Monto: 1525
+<<<<<<< HEAD
 [2025-04-22T03:52:30.627Z] info: Inicio de pago | Cliente: Daniela  | Monto: 735 | Trama: 202504212152300104000101027891082620100000735000041567259203900
 [2025-04-22T03:52:30.651Z] info: Datos de trama extraídos | Referencia: 415672592039 | Cliente: Daniela 
 [2025-04-22T03:52:30.816Z] error: Error crítico al procesar pago: Error al iniciar Java: spawn C:\Program Files\Java\jdk-24\bin\java.exe ENOENT
@@ -27,3 +28,99 @@
 [2025-04-23T04:44:57.361Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222244570101000101076756465450100000390000014722643453701
 [2025-04-23T04:44:57.366Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 980376083721 | Cliente: fg
 [2025-04-23T04:44:57.393Z] info: Transacción exitosa | Referencia: 980376083721 | Cliente: fg | Monto: 390
+=======
+[2025-04-22T02:46:16.841Z] info: Inicio de pago | Cliente: Henry Angel Gabriel | Monto: 8355 | Trama: 202504212046160101000101019902314950100008355000061649875367900
+[2025-04-22T02:46:16.851Z] info: Datos de trama extraídos | Referencia: 616498753679 | Cliente: Henry Angel Gabriel
+[2025-04-22T02:46:17.467Z] info: Respuesta banco | Estado: 01 | Descripción: 202504212046170101000101019902314950100008355000061649875367901
+[2025-04-22T02:46:17.468Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 845978646238 | Cliente: Henry Angel Gabriel
+[2025-04-22T02:46:17.473Z] info: Transacción exitosa | Referencia: 845978646238 | Cliente: Henry Angel Gabriel | Monto: 8355
+[2025-04-22T02:52:38.685Z] info: Inicio de pago | Cliente: Henry Angel Gabriel | Monto: 525 | Trama: 20250421205238010100010A019902314930100000525000031248755964300
+[2025-04-22T02:52:38.690Z] info: Datos de trama extraídos | Referencia: 312487559643 | Cliente: Henry Angel Gabriel
+[2025-04-22T02:52:38.921Z] error: Error crítico al procesar pago: No se pudo encontrar una respuesta válida del banco
+[2025-04-22T02:53:54.398Z] info: Inicio de pago | Cliente: Henry Angel Gabriel | Monto: 525 | Trama: 20250421205354010100010A019902314910100000525000090514233263400
+[2025-04-22T02:53:54.399Z] info: Datos de trama extraídos | Referencia: 905142332634 | Cliente: Henry Angel Gabriel
+[2025-04-22T02:53:54.536Z] error: Error crítico al procesar pago: No se pudo encontrar una respuesta válida del banco
+[2025-04-23T04:26:27.382Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 2525 | Trama: 202504222226270101000101019902314950100002525000043142682625200
+[2025-04-23T04:26:27.394Z] info: Datos de trama extraídos | Referencia: 431426826252 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:26:28.068Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222226280101000101019902314950100002525000043142682625201
+[2025-04-23T04:26:28.068Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 163536144099 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:26:28.073Z] info: Transacción exitosa | Referencia: 163536144099 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 2525
+[2025-04-23T04:48:57.057Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1680 | Trama: 202504222248570101000101019902314950100001680000062272486408300
+[2025-04-23T04:48:57.069Z] info: Datos de trama extraídos | Referencia: 622724864083 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:48:57.303Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222248570101000101019902314950100001680000062272486408301
+[2025-04-23T04:48:57.304Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 865040262556 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:48:57.307Z] info: Transacción exitosa | Referencia: 865040262556 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1680
+[2025-04-23T04:55:03.076Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 9000 | Trama: 202504222255030101000101019902314950100009000000048001385505300
+[2025-04-23T04:55:03.088Z] info: Datos de trama extraídos | Referencia: 480013855053 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:55:03.317Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222255030101000101019902314950100009000000048001385505301
+[2025-04-23T04:55:03.318Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 692656893590 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T04:55:03.321Z] info: Transacción exitosa | Referencia: 692656893590 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 9000
+[2025-04-23T05:03:40.304Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1000 | Trama: 202504222303400101000101019902314950100001000000073303494265900
+[2025-04-23T05:03:40.314Z] info: Datos de trama extraídos | Referencia: 733034942659 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T05:03:40.529Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222303400101000101019902314950100001000000073303494265901
+[2025-04-23T05:03:40.530Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 254434989598 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T05:03:40.533Z] info: Transacción exitosa | Referencia: 254434989598 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1000
+[2025-04-23T06:02:42.969Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1050 | Trama: 202504230002420101000101019902314950100001050000020316831571800
+[2025-04-23T06:02:42.973Z] info: Datos de trama extraídos | Referencia: 203168315718 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T06:02:43.116Z] info: Respuesta banco | Estado: 01 | Descripción: 202504230002430101000101019902314950100001050000020316831571801
+[2025-04-23T06:02:43.117Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 282688193448 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-23T06:02:43.119Z] info: Transacción exitosa | Referencia: 282688193448 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 1050
+[2025-04-24T02:49:42.818Z] info: Inicio de pago | Cliente: N/A | Monto: undefined | Trama: 0200000000123456202504232025240011234567891000
+[2025-04-24T02:49:42.822Z] info: Datos de trama extraídos | Referencia:  | Cliente: N/A
+[2025-04-24T02:49:42.854Z] error: Error crítico al procesar pago: La trama a enviar no tiene el formato correcto.
+[2025-04-24T03:03:08.405Z] info: Inicio de pago | Cliente: N/A | Monto: undefined | Trama: 202504232103050104000101123456789010100000123450000000000000000
+[2025-04-24T03:03:08.409Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: N/A
+[2025-04-24T03:03:08.859Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232103080104000101123456789010100000123450000000000000001
+[2025-04-24T03:03:08.860Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 950674899009 | Cliente: N/A
+[2025-04-24T03:03:08.865Z] info: Transacción exitosa | Referencia: 950674899009 | Cliente: N/A | Monto: undefined
+[2025-04-24T03:03:50.737Z] info: Inicio de pago | Cliente: N/A | Monto: undefined | Trama: 202504232103490104000101123456789010100000123450000000000000000
+[2025-04-24T03:03:50.738Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: N/A
+[2025-04-24T03:03:50.930Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232103500104000101123456789010100000123450000000000000001
+[2025-04-24T03:03:50.930Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 476425060885 | Cliente: N/A
+[2025-04-24T03:03:50.931Z] info: Transacción exitosa | Referencia: 476425060885 | Cliente: N/A | Monto: undefined
+[2025-04-24T03:05:58.670Z] info: Inicio de pago | Cliente: Usuario Chat | Monto: 0 | Trama: 202504232105560104000101123456789010100000123450000000000000000
+[2025-04-24T03:05:58.674Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: Usuario Chat
+[2025-04-24T03:05:58.838Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232105580104000101123456789010100000123450000000000000001
+[2025-04-24T03:05:58.839Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 168077463647 | Cliente: Usuario Chat
+[2025-04-24T03:05:58.841Z] info: Transacción exitosa | Referencia: 168077463647 | Cliente: Usuario Chat | Monto: 0
+[2025-04-24T03:06:14.257Z] info: Inicio de pago | Cliente: Usuario Chat | Monto: 0 | Trama: 202504232106120104000101123456789010100000123450000000000000000
+[2025-04-24T03:06:14.258Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: Usuario Chat
+[2025-04-24T03:06:14.417Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232106140104000101123456789010100000123450000000000000001
+[2025-04-24T03:06:14.417Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 158199562745 | Cliente: Usuario Chat
+[2025-04-24T03:06:14.418Z] info: Transacción exitosa | Referencia: 158199562745 | Cliente: Usuario Chat | Monto: 0
+[2025-04-24T03:07:13.072Z] info: Inicio de pago | Cliente: Usuario Chat | Monto: 0 | Trama: 202504232107110104000101123456789010100000123450000000000000000
+[2025-04-24T03:07:13.073Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: Usuario Chat
+[2025-04-24T03:07:13.215Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232107130104000101123456789010100000123450000000000000001
+[2025-04-24T03:07:13.215Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 519699715680 | Cliente: Usuario Chat
+[2025-04-24T03:07:13.216Z] info: Transacción exitosa | Referencia: 519699715680 | Cliente: Usuario Chat | Monto: 0
+[2025-04-24T03:10:30.068Z] info: Inicio de pago | Cliente: Usuario Chat | Monto: 0 | Trama: 202504232110280104000101123456789010100000123450000000000000000
+[2025-04-24T03:10:30.073Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: Usuario Chat
+[2025-04-24T03:10:30.239Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232110300104000101123456789010100000123450000000000000001
+[2025-04-24T03:10:30.240Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 908603478955 | Cliente: Usuario Chat
+[2025-04-24T03:10:30.242Z] info: Transacción exitosa | Referencia: 908603478955 | Cliente: Usuario Chat | Monto: 0
+[2025-04-24T03:10:57.925Z] info: Inicio de pago | Cliente: Usuario Chat | Monto: 0 | Trama: 202504232110470104000101123456789010100000123450000000000000000
+[2025-04-24T03:10:57.926Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: Usuario Chat
+[2025-04-24T03:10:58.080Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232110580104000101123456789010100000123450000000000000001
+[2025-04-24T03:10:58.080Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 714027852805 | Cliente: Usuario Chat
+[2025-04-24T03:10:58.082Z] info: Transacción exitosa | Referencia: 714027852805 | Cliente: Usuario Chat | Monto: 0
+[2025-04-24T03:14:12.639Z] info: Inicio de pago | Cliente: Usuario Chat | Monto: 0 | Trama: 202504232114110104000101123456789010100000123450000000000000000
+[2025-04-24T03:14:12.643Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: Usuario Chat
+[2025-04-24T03:14:12.782Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232114120104000101123456789010100000123450000000000000001
+[2025-04-24T03:14:12.783Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 555104651887 | Cliente: Usuario Chat
+[2025-04-24T03:14:12.785Z] info: Transacción exitosa | Referencia: 555104651887 | Cliente: Usuario Chat | Monto: 0
+[2025-04-24T03:14:57.386Z] info: Inicio de pago | Cliente: Usuario Chat | Monto: 0 | Trama: 202504232114550104000101123456789010100000123450000000000000000
+[2025-04-24T03:14:57.387Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: Usuario Chat
+[2025-04-24T03:14:57.671Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232114570104000101123456789010100000123450000000000000001
+[2025-04-24T03:14:57.671Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 764171770565 | Cliente: Usuario Chat
+[2025-04-24T03:14:57.673Z] info: Transacción exitosa | Referencia: 764171770565 | Cliente: Usuario Chat | Monto: 0
+[2025-04-24T03:16:44.786Z] info: Inicio de pago | Cliente: Usuario Chat | Monto: 0 | Trama: 202504232116420104000101123456789010100000123450000000000000000
+[2025-04-24T03:16:44.791Z] info: Datos de trama extraídos | Referencia: 000000000000 | Cliente: Usuario Chat
+[2025-04-24T03:16:44.969Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232116440104000101123456789010100000123450000000000000001
+[2025-04-24T03:16:44.970Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 431118141825 | Cliente: Usuario Chat
+[2025-04-24T03:16:44.972Z] info: Transacción exitosa | Referencia: 431118141825 | Cliente: Usuario Chat | Monto: 0
+[2025-04-24T03:18:00.377Z] info: Inicio de pago | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 3560 | Trama: 202504232118000101000101019902314950100003560000097773732288100
+[2025-04-24T03:18:00.382Z] info: Datos de trama extraídos | Referencia: 977737322881 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-24T03:18:00.518Z] info: Respuesta banco | Estado: 01 | Descripción: 202504232118000101000101019902314950100003560000097773732288101
+[2025-04-24T03:18:00.519Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 949898209718 | Cliente: Henry Angel Gabriel Teret Hernández
+[2025-04-24T03:18:00.520Z] info: Transacción exitosa | Referencia: 949898209718 | Cliente: Henry Angel Gabriel Teret Hernández | Monto: 3560
+>>>>>>> 0d0994551b2987f306a8d14ca2c9283742a30c31

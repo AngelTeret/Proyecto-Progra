@@ -4,6 +4,8 @@ const path = require('path');
 const cors = require('cors');
 
 const app = express();
+const http = require('http').createServer(app);
+const io = require('socket.io')(http);
 
 // Configuración de CORS
 app.use(cors({
@@ -33,8 +35,25 @@ app.use('/views', express.static(path.join(__dirname, 'views')));
 const rutasTienda = require('./routes');
 app.use('/', rutasTienda);
 
-// Iniciar el servidor
+// Configurar Socket.IO
+io.on('connection', (socket) => {
+    console.log('Usuario conectado a Socket.IO');
+    
+    // Evento para recibir mensajes del chat
+    socket.on('chat message', (msg) => {
+        console.log('Mensaje recibido en socket:', msg);
+        io.emit('chat message', msg);
+    });
+    
+    // Desconexión
+    socket.on('disconnect', () => {
+        console.log('Usuario desconectado');
+    });
+});
+
+// Iniciar el servidor con soporte para Socket.IO
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
+http.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`Socket.IO está activo y escuchando conexiones`);
 });

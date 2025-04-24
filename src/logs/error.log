@@ -1,3 +1,9 @@
+<<<<<<< HEAD
 [2025-04-22T03:52:30.816Z] error: Error crítico al procesar pago: Error al iniciar Java: spawn C:\Program Files\Java\jdk-24\bin\java.exe ENOENT
 [2025-04-22T03:52:43.282Z] error: Error crítico al procesar pago: Error al iniciar Java: spawn C:\Program Files\Java\jdk-24\bin\java.exe ENOENT
 [2025-04-23T04:44:18.241Z] error: Error crítico al procesar pago: No se pudo encontrar una respuesta válida del banco
+=======
+[2025-04-22T02:52:38.921Z] error: Error crítico al procesar pago: No se pudo encontrar una respuesta válida del banco
+[2025-04-22T02:53:54.536Z] error: Error crítico al procesar pago: No se pudo encontrar una respuesta válida del banco
+[2025-04-24T02:49:42.854Z] error: Error crítico al procesar pago: La trama a enviar no tiene el formato correcto.
+>>>>>>> 0d0994551b2987f306a8d14ca2c9283742a30c31

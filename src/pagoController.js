@@ -1,55 +1,48 @@
-// Controlador para pago
-
-// Importar módulos
 const { enviarTramaBanco, configurarBanco } = require('./utilsBanco');
 const { BANCO_CONFIG } = require('./config');
 const db = require('./database');
-const logger = require('./logger'); // Bitácora de sistema
+const logger = require('./logger');
 
-// La inicialización de la base de datos ya se hace en el archivo database.js
-
-// Iniciar proceso de pago (mostrar formulario)
+// Endpoint para mostrar disponibilidad del formulario de pago
 exports.iniciarPago = (req, res) => {
-    // Respuesta simplificada con los campos utilizados en el formulario actual
     res.json({
         exito: true,
         mensaje: 'Formulario de pago listo'
     });
 };
 
-// Procesar pago (comunicación con banco)
+// Auxiliar para obtener nombre completo del contacto
+function obtenerNombreCompleto(datosContacto) {
+    if (!datosContacto || typeof datosContacto !== 'object') return 'N/A';
+    return `${datosContacto.nombre || ''} ${datosContacto.apellido || ''}`.trim() || 'N/A';
+}
+
+// Auxiliar para verificar disponibilidad de datos de contacto
+function contactoDisponible(datosContacto) {
+    return datosContacto && typeof datosContacto === 'object';
+}
+
+// Endpoint principal para procesar pagos
 exports.procesarPago = async (req, res) => {
-    // BITÁCORA: Inicio de proceso de pago
-    logger.info(`Inicio de pago | Cliente: ${req.body.datosContacto?.nombre || 'N/A'} | Monto: ${req.body.montoTotal} | Trama: ${req.body.trama}`);
+    logger.info(`Inicio de pago | Cliente: ${obtenerNombreCompleto(req.body.datosContacto)} | Monto: ${req.body.montoTotal} | Trama: ${req.body.trama}`);
     console.log('Datos recibidos en el backend:', req.body);
-    
-    // Extraer datos necesarios
-    const { trama, montoTotal, datosContacto, carrito } = req.body;
-    
+
+    const { trama, montoTotal, datosContacto } = req.body;
+
     if (!trama) {
         logger.error('Datos incompletos - no se recibió la trama');
-        console.error('Datos incompletos - no se recibió la trama');
         return res.status(400).json({ 
             exito: false, 
             mensaje: 'Se requiere la trama bancaria' 
         });
     }
-    
 
-    const contactoDisponible = datosContacto && typeof datosContacto === 'object';
-    if (!contactoDisponible) {
+    if (!contactoDisponible(datosContacto)) {
         console.log('No se recibieron datos de contacto - usando valores por defecto');
     }
-    
-    console.log('Trama recibida:', trama);
-    console.log('Monto total:', montoTotal);
-    
-    // Parsear datos del cliente y banco desde la trama
-    // La trama tiene un formato específico, extraemos la información relevante
-    // Nota: En la trama original, usamos lo que viene del cliente, pero internamente
-    // generaremos nuestro propio número de referencia único
+
     const datosTrama = {
-        fecha_hora_trama: trama.substring(0, 14), // Fecha y hora en formato AAAAMMDDHHMMSS
+        fecha_hora_trama: trama.substring(0, 14),
         tipo_transaccion: trama.substring(14, 16),
         canal_terminal: trama.substring(16, 18),
         id_empresa: trama.substring(18, 22),
@@ -58,45 +51,32 @@ exports.procesarPago = async (req, res) => {
         tipo_moneda: trama.substring(35, 37),
         monto_entero: trama.substring(37, 47),
         monto_decimal: trama.substring(47, 49),
-        numero_referencia: trama.substring(49, 61) // Lo que viene en la trama
+        numero_referencia: trama.substring(49, 61)
     };
-    
-    console.log('Fecha y hora extraída de la trama:', datosTrama.fecha_hora_trama);
-    
-    // Asegurar que la configuración del banco esté correcta
+
     configurarBanco(BANCO_CONFIG);
     console.log(`Banco configurado en ${BANCO_CONFIG.host}:${BANCO_CONFIG.puerto}`);
 
     try {
-        console.log(`Conectando al banco en ${BANCO_CONFIG.host}:${BANCO_CONFIG.puerto}...`);
-        
-        // 1. Generar referencia única para la transacción bancaria
-        // BITÁCORA: Datos de la trama extraídos
-        logger.info(`Datos de trama extraídos | Referencia: ${trama.substring(49, 61)} | Cliente: ${datosContacto?.nombre || 'N/A'}`);
+        logger.info(`Datos de trama extraídos | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)}`);
+
         try {
-            // Generar un número de referencia único para esta transacción
             const numeroReferenciaUnico = await db.generarNumeroReferencia();
-            console.log('Número de referencia único generado:', numeroReferenciaUnico);
-            // Actualizar el número de referencia en los datos
             datosTrama.numero_referencia = numeroReferenciaUnico;
+            console.log('Referencia generada:', numeroReferenciaUnico);
         } catch (dbError) {
             logger.error(`Error al generar número de referencia: ${dbError.message}`);
-            console.error('Error al generar número de referencia:', dbError);
-            // Continuamos con el proceso de pago aunque falle la generación de referencia
         }
-        
-        // 2. Comunicarse con el banco
+
         const respuestaBanco = await enviarTramaBanco(trama);
         console.log('Respuesta recibida del banco:', respuestaBanco);
-        
-        // 3. Interpretar respuesta
+
         const estadoBanco = respuestaBanco.slice(61, 63);
         let descripcionBanco = 'Desconocido';
 
-        // BITÁCORA: Respuesta del banco recibida
         logger.info(`Respuesta banco | Estado: ${estadoBanco} | Descripción: ${respuestaBanco}`);
-        
-        switch(estadoBanco) {
+
+        switch (estadoBanco) {
             case '01': descripcionBanco = 'Aprobada'; break;
             case '02': descripcionBanco = 'Rechazada'; break;
             case '03': descripcionBanco = 'Sistema fuera de servicio'; break;
@@ -106,14 +86,10 @@ exports.procesarPago = async (req, res) => {
             case '07': descripcionBanco = 'Empresa/Sucursal inválida'; break;
             case '08': descripcionBanco = 'Monto inválido'; break;
             case '09': descripcionBanco = 'Transacción duplicada'; break;
-            default: descripcionBanco = 'Estado desconocido';
+            default:   descripcionBanco = 'Estado desconocido';
         }
-        
-        console.log('Estado de la transacción:', { estadoBanco, descripcionBanco });
-        
-        // 4. Registrar el pago en la base de datos
-        // BITÁCORA: Estado de la transacción
-        logger.info(`Resultado transacción | Estado: ${estadoBanco} (${descripcionBanco}) | Referencia: ${datosTrama.numero_referencia} | Cliente: ${datosContacto?.nombre || 'N/A'}`);
+
+        logger.info(`Resultado transacción | Estado: ${estadoBanco} (${descripcionBanco}) | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)}`);
 
         try {
             await db.crearTransaccionBancaria({
@@ -131,27 +107,23 @@ exports.procesarPago = async (req, res) => {
                 descripcion_estado: descripcionBanco,
                 trama_enviada: trama,
                 trama_recibida: respuestaBanco,
-                // Información de contacto (si está disponible)
-                nombre_cliente: contactoDisponible ? `${datosContacto.nombre} ${datosContacto.apellido || ''}` : '',
-                email_cliente: contactoDisponible ? datosContacto.correo : '',
-                telefono_cliente: contactoDisponible ? datosContacto.telefono : '',
-                direccion_cliente: contactoDisponible ? datosContacto.direccion : ''
+                nombre_cliente: contactoDisponible(datosContacto) ? obtenerNombreCompleto(datosContacto) : '',
+                email_cliente: contactoDisponible(datosContacto) ? datosContacto.correo : '',
+                telefono_cliente: contactoDisponible(datosContacto) ? datosContacto.telefono : '',
+                direccion_cliente: contactoDisponible(datosContacto) ? datosContacto.direccion : ''
             });
         } catch (dbError) {
             logger.error(`Error al registrar la transacción bancaria: ${dbError.message}`);
-            console.error('Error al registrar la transacción bancaria:', dbError);
-            // Continuamos y devolvemos la respuesta al cliente aunque falle el registro
         }
-        
-        // 5. Enviar respuesta al cliente
-        // BITÁCORA: Resultado final de la transacción
+
         if (estadoBanco === '01') {
-            logger.info(`Transacción exitosa | Referencia: ${datosTrama.numero_referencia} | Cliente: ${datosContacto?.nombre || 'N/A'} | Monto: ${montoTotal}`);
+            logger.info(`Transacción exitosa | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)} | Monto: ${montoTotal}`);
         } else if (estadoBanco === '09') {
-            logger.warn(`Transacción duplicada | Referencia: ${datosTrama.numero_referencia} | Cliente: ${datosContacto?.nombre || 'N/A'}`);
+            logger.warn(`Transacción duplicada | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)}`);
         } else {
-            logger.error(`Transacción fallida | Estado: ${estadoBanco} (${descripcionBanco}) | Referencia: ${datosTrama.numero_referencia} | Cliente: ${datosContacto?.nombre || 'N/A'}`);
+            logger.error(`Transacción fallida | Estado: ${estadoBanco} (${descripcionBanco}) | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)}`);
         }
+
         res.json({
             exito: estadoBanco === '01',
             mensaje: estadoBanco === '01' ? 'Pago procesado correctamente' : 'Pago rechazado',
@@ -160,9 +132,9 @@ exports.procesarPago = async (req, res) => {
             tramaEnviada: trama,
             respuestaBanco
         });
+
     } catch (err) {
         logger.error(`Error crítico al procesar pago: ${err.message}`);
-        console.error('Error al comunicar con el banco:', err);
         res.status(200).json({ 
             exito: false, 
             mensaje: 'Error al comunicar con el banco: ' + err.message,

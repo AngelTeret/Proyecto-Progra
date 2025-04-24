@@ -3,6 +3,15 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 
+// Middleware para permitir acceso público al chat y su API
+router.use((req, res, next) => {
+    const publicPaths = ['/chat', '/views/chat.html', '/js/chat.js', '/api/banco/procesar', '/api/trama'];
+    if (publicPaths.includes(req.path)) {
+        return next(); // Permite acceso sin autenticación
+    }
+    next();
+});
+
 // Importar el repositorio de base de datos centralizado
 const db = require('./database');
 
@@ -33,34 +42,175 @@ router.get('/api/landing', async (req, res) => {
     }
 });
 
-
-
-// Ruta para la página del carrito
-router.get('/carrito.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/carrito.html'));
+// Ruta para procesar tramas bancarias desde el chat
+router.post('/api/trama', async (req, res) => {
+    try {
+        const { trama } = req.body;
+        
+        if (!trama) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Se requiere una trama bancaria válida' 
+            });
+        }
+        
+        // Modificamos el objeto request para simular los datos esperados por pagoController
+        req.body = {
+            trama,
+            montoTotal: 0,
+            datosContacto: {
+                nombre: 'Usuario',
+                apellido: 'Chat'
+            }
+        };
+        
+        const customRes = {
+            statusCode: 200,
+            data: null,
+            status: function(code) {
+                this.statusCode = code;
+                return this;
+            },
+            json: function(data) {
+                this.data = data;
+                return this;
+            }
+        };
+        
+        // Usar la misma lógica del pagoController
+        await pagoController.procesarPago(req, customRes);
+        
+        // Transformar la respuesta al formato esperado por el chat
+        if (customRes.statusCode >= 400) {
+            return res.status(customRes.statusCode).json({
+                success: false,
+                error: customRes.data?.mensaje || 'Error al procesar la trama'
+            });
+        }
+        
+        // Extraer el estado de la trama de respuesta
+        if (customRes.data?.trama_respuesta) {
+            const tramaRespuesta = customRes.data.trama_respuesta;
+            const estadoTrama = tramaRespuesta.substring(61, 63); // Últimos 2 dígitos
+            
+            let mensaje = '';
+            let exito = false;
+            
+            // Codificar mensajes basados en el estado (igual que en SweetAlert de pagoController)
+            switch (estadoTrama) {
+                case '01': // Aprobada
+                    exito = true;
+                    mensaje = 'Transacción aprobada';
+                    break;
+                case '02': // Rechazada
+                    mensaje = 'Transacción rechazada';
+                    break;
+                case '03': // Sistema fuera de servicio
+                    mensaje = 'Sistema fuera de servicio';
+                    break;
+                case '04': // Cancelada por usuario
+                    mensaje = 'Operación cancelada';
+                    break;
+                case '05': // Sin fondos suficientes
+                    mensaje = 'Fondos insuficientes';
+                    break;
+                case '06': // Cliente no identificado
+                    mensaje = 'Cliente no identificado';
+                    break;
+                case '07': // Empresa/Sucursal inválida
+                    mensaje = 'Empresa o sucursal inválida';
+                    break;
+                case '08': // Monto inválido
+                    mensaje = 'Monto inválido';
+                    break;
+                case '09': // Transacción duplicada
+                    mensaje = 'Transacción duplicada';
+                    break;
+                default:
+                    mensaje = 'Estado desconocido: ' + estadoTrama;
+            }
+            
+            // Extraer más detalles de la trama para mostrar al cliente
+            const monto = tramaRespuesta.substring(37, 49);
+            const montoFormateado = parseFloat(monto.substring(0, 10) + '.' + monto.substring(10, 12));
+            const referencia = tramaRespuesta.substring(49, 61);
+            
+            return res.json({
+                success: exito,
+                mensaje: mensaje,
+                estado: estadoTrama,
+                trama_respuesta: tramaRespuesta,
+                monto: montoFormateado,
+                referencia: referencia,
+                fecha: new Date().toISOString()
+            });
+        }
+        
+        // Si no hay trama de respuesta, usar la respuesta original
+        return res.json({
+            success: customRes.data?.exito || false,
+            mensaje: customRes.data?.mensaje || 'Operación procesada',
+            detalles: customRes.data || {}
+        });
+        
+    } catch (error) {
+        console.error('Error al procesar la trama desde el chat:', error);
+        return res.status(500).json({ 
+            success: false, 
+            error: 'Error al procesar la trama bancaria', 
+            detalle: error.message 
+        });
+    }
 });
 
-// Página principal - landing page
+
+
+// --- VISTAS PRINCIPALES (solo rutas limpias, sin .html) ---
 router.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/landing.html'));
 });
-
-// Página de productos
+router.get('/carrito', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/carrito.html'));
+});
 router.get('/productos', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/productos.html'));
 });
-
-router.get('/productos.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/productos.html'));
-});
-
-// Página de pago
 router.get('/pago', (req, res) => {
     res.sendFile(path.join(__dirname, 'views/pago.html'));
 });
+// --- VISTA CHAT LIMITADO (Fase 2) ---
+router.get('/chat', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/chat.html'));
+});
 
-router.get('/pago.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/pago.html'));
+// --- API para procesar trama bancaria desde el chat ---
+router.post('/api/banco/procesar', async (req, res) => {
+    try {
+        const trama = req.body.trama;
+        if (!trama || !/^\d{63}$/.test(trama)) {
+            return res.status(400).json({ mensaje: 'La trama debe tener exactamente 63 dígitos numéricos.' });
+        }
+        // Reutiliza la función para enviar la trama al banco
+        const { enviarTramaBanco } = require('./utilsBanco');
+        const respuesta = await enviarTramaBanco(trama);
+        if (respuesta) {
+            return res.json({ tramaRespuesta: respuesta });
+        } else {
+            return res.status(500).json({ mensaje: 'No se recibió respuesta del banco.' });
+        }
+    } catch (err) {
+        return res.status(500).json({ mensaje: err.message || 'Error procesando la trama.' });
+    }
+});
+
+// Redirección automática si intentan acceder con .html a la ruta limpia
+router.get(['/:page.html'], (req, res) => {
+    const page = req.params.page;
+    const allowed = ['productos', 'carrito', 'pago'];
+    if (allowed.includes(page)) {
+        return res.redirect('/' + page);
+    }
+    res.status(404).send('Página no encontrada');
 });
 
 // API de procesamiento de pago
@@ -92,9 +242,19 @@ router.use('/js', express.static(path.join(__dirname, 'public/js')));
 router.use('/styles', express.static(path.join(__dirname, 'public/styles')));
 router.use('/img', express.static(path.join(__dirname, 'public/img')));
 
-// Servir vistas del panel admin
-router.get('/views/admin/*', (req, res) => {
-    res.sendFile(path.join(__dirname, req.url));
+// Rutas limpias para vistas admin
+router.get('/admin/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/login.html'));
+});
+
+router.get('/admin/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/dashboard.html'));
+});
+router.get('/admin/productos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/productos.html'));
+});
+router.get('/admin/categorias', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/categorias.html'));
 });
 
 // Rutas de la API para categorías
