@@ -4,7 +4,18 @@ body {
     font-family: 'Segoe UI', Arial, sans-serif;
     background: #fafafa;
     color: #222;
+    display: flex;
+    flex-direction: column;
 }
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background-color: #f2f2f2;
+    overflow: hidden;
+}
+
 .barraSuperior {
     background: #fff;
     border-bottom: 2px solid #eee;
@@ -469,28 +480,44 @@ body {
 /* Estilos para la página de pago moderna */
 .pago-container {
     display: flex;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 25px 20px 20px;
-    gap: 50px;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-}
+    height: 100vh;
+  }
 
 .pago-info {
-    flex: 3;
-    padding-right: 30px;
-}
+    flex: 1;
+    max-width: 600px;
+    background-color: #ffffff;
+    padding: 2rem;
+    overflow-y: auto;
+    height: 100vh;
+    box-sizing: border-box;
+  }
 
 .pago-resumen {
-    flex: 2;
-    background-color: #f9f9f9;
-    border-radius: 12px;
-    padding: 30px;
-    position: sticky;
-    top: 20px;
-    align-self: flex-start;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  flex: 1;
+  background-color:#FFE4E1;
+  padding: 2rem;
+  overflow-y: auto;
+  height: 100vh;
+  box-sizing: border-box;
+  background-color: rgba(255, 228, 225, 0.7);
 }
+
+.pago-resumen > .resumen-card {
+    background-color: white;
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    border-radius: 8px;
+  }
+
+.pago-scroll-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    height: 100vh;
+    background-color: white;
+  }
 
 .pago-header {
     text-align: center;
