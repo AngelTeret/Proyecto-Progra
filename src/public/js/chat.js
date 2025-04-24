@@ -1,193 +1,210 @@
-// Variables globales
-let selectedUser = null;
-const userInfo = JSON.parse(sessionStorage.getItem('userInfo'));
+// --- Chat para envío de tramas bancarias ---
 
-// Verificar si hay información de usuario
-if (!userInfo || !userInfo.username) {
-    window.location.href = '/login';
-}
+// Obtener elementos del DOM
+const messagesContainer = document.querySelector('.messages-container');
+const messageInput = document.getElementById('messageInput');
+const sendButton = document.getElementById('sendButton');
 
-const currentUser = userInfo.username;
+// Crear botón para generar una trama de ejemplo
+const generarTramaBtn = document.createElement('button');
+generarTramaBtn.textContent = 'Generar Trama Ejemplo';
+generarTramaBtn.className = 'btn btn-secondary';
+generarTramaBtn.style.margin = '10px';
+generarTramaBtn.style.padding = '5px 10px';
+generarTramaBtn.style.backgroundColor = '#6c757d';
+generarTramaBtn.style.color = '#fff';
+generarTramaBtn.style.border = 'none';
+generarTramaBtn.style.borderRadius = '4px';
+generarTramaBtn.style.cursor = 'pointer';
+generarTramaBtn.onclick = generarTramaEjemplo;
 
-// Configurar socket
-const socket = io();
+// Insertar el botón sobre el panel de mensajes
+const chatPanel = document.querySelector('.chat-panel');
+chatPanel.insertBefore(generarTramaBtn, messagesContainer);
 
-// Mostrar nombre de usuario actual
-document.getElementById('currentUsername').textContent = currentUser;
-document.querySelector('.user-avatar span').textContent = currentUser.charAt(0).toUpperCase();
-
-// Registrar el socket del usuario
-console.log('Registrando socket para:', currentUser);
-socket.emit('register socket', currentUser);
-
-// Manejar lista de usuarios
-socket.on('users update', (users) => {
-    console.log('Recibida actualización de usuarios:', users);
-    const usersList = document.getElementById('usersList');
-    usersList.innerHTML = '';
-    
-    users.forEach(user => {
-        if (user.username !== currentUser) {
-            const div = document.createElement('div');
-            div.className = `user-item ${selectedUser === user.username ? 'selected' : ''}`;
-            
-            // Obtener mensajes no leídos enviados por este usuario al usuario actual
-            const unreadCount = users.find(u => u.username === currentUser)?.unreadMessages?.[user.username] || 0;
-            
-            div.innerHTML = `
-                <div class="user-status ${user.online ? 'online' : ''}"></div>
-                <span class="user-name">${user.username}</span>
-                ${unreadCount > 0 ? `<div class="unread-counter">${unreadCount}</div>` : ''}
-            `;
-            
-            div.onclick = () => selectUser(user.username);
-            usersList.appendChild(div);
-        }
-    });
-});
-
-// Agregar evento al input de mensaje para marcar como leídos
-document.getElementById('messageInput').addEventListener('focus', function() {
-    if (selectedUser) {
-        socket.emit('request messages', { with: selectedUser });
-    }
-});
-
-// Manejar mensajes privados
-socket.on('private message', (data) => {
-    console.log('Mensaje privado recibido:', data);
-    
-    // Si el mensaje es del usuario seleccionado, mostrarlo
-    if (data.from === selectedUser) {
-        appendMessage(data, true);
-    } else {
-        // Si el mensaje no es del usuario seleccionado, solicitar actualización de la lista
-        socket.emit('request users list');
-    }
-    
-    // Solicitar actualización de la lista de usuarios para actualizar contadores
-    socket.emit('request users list');
-});
-
-// Manejar historial de mensajes
-socket.on('message history', (messages) => {
-    loadMessageHistory(messages);
-});
-
-// Seleccionar usuario para chatear
-function selectUser(username) {
-    console.log('Seleccionando usuario:', username);
-    selectedUser = username;
-    document.getElementById('selectedUser').textContent = username;
-    
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-    
-    messageInput.disabled = false;
-    sendButton.disabled = false;
-    messageInput.placeholder = `Escribe un mensaje para ${username}...`;
-    
-    // Actualizar selección visual
-    document.querySelectorAll('.user-item').forEach(item => {
-        item.classList.remove('selected');
-        if (item.querySelector('.user-name').textContent === username) {
-            item.classList.add('selected');
-        }
-    });
-
-    // Limpiar mensajes anteriores
-    document.getElementById('messagesContainer').innerHTML = '';
-    
-    // Solicitar mensajes específicos para este usuario
-    socket.emit('request messages', { with: username });
-}
-
-// Enviar mensaje
-function sendMessage() {
-    const input = document.getElementById('messageInput');
-    const message = input.value.trim();
-    
-    if (message && selectedUser) {
-        console.log('Enviando mensaje a:', selectedUser);
-        socket.emit('private message', {
-            to: selectedUser,
-            message: message
-        });
-
-        appendMessage({ message, created_at: new Date().toISOString() });
-        
-        input.value = '';
-    }
-}
-
-// Enter para enviar mensaje
-document.getElementById('messageInput').addEventListener('keypress', (e) => {
+// Enviar mensaje al presionar Enter
+messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
     }
 });
 
-// Función para formatear la hora
-function formatMessageTime(created_at) {
-    const time = new Date(created_at).toLocaleTimeString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-    return time;
+// Enviar mensaje al hacer clic
+sendButton.addEventListener('click', sendMessage);
+
+// Genera una trama bancaria válida para pruebas
+function generarTramaEjemplo() {
+    const ahora = new Date();
+    const fechaHora = ahora.getFullYear() +
+                     ('0' + (ahora.getMonth() + 1)).slice(-2) +
+                     ('0' + ahora.getDate()).slice(-2) +
+                     ('0' + ahora.getHours()).slice(-2) +
+                     ('0' + ahora.getMinutes()).slice(-2) +
+                     ('0' + ahora.getSeconds()).slice(-2);
+
+    const tramaEjemplo = fechaHora + '01' + '04' + '0001' + '01' +
+                         '12345678901' + '01' + '0000012345' + '00' +
+                         '000000000000' + '00';
+
+    console.log('Trama generada:', tramaEjemplo);
+    console.log('Longitud de la trama:', tramaEjemplo.length);
+
+    messageInput.value = tramaEjemplo;
+    return tramaEjemplo;
 }
 
-// Agregar mensaje al chat
-function appendMessage(data, isReceived = false) {
-    const messageContainer = document.createElement('div');
-    messageContainer.className = `message ${isReceived ? 'received' : 'sent'}`;
-    
-    const time = formatMessageTime(data.created_at);
-    
-    messageContainer.innerHTML = `
-        <div class="message-content">
-            <p>${data.message}</p>
-            <span class="message-time">${time}</span>
-        </div>
-    `;
-    
-    const messagesContainer = document.getElementById('messagesContainer');
-    messagesContainer.appendChild(messageContainer);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
+let procesandoTrama = false;
 
-// Cargar historial de mensajes
-function loadMessageHistory(messages) {
-    const messagesContainer = document.getElementById('messagesContainer');
-    messagesContainer.innerHTML = '';
-    messages.forEach(msg => {
-        const isReceived = msg.sender_username !== currentUser;
-        appendMessage({
-            message: msg.message,
-            created_at: msg.created_at || msg.timestamp
-        }, isReceived);
-    });
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
+// Envía la trama al servidor y gestiona la respuesta
+function sendMessage() {
+    if (procesandoTrama) return;
 
-// Función de logout
-async function logout() {
-    try {
-        const response = await fetch('/logout', {
+    const trama = messageInput.value.trim();
+
+    if (trama.length !== 63 || !/^\d+$/.test(trama) || trama.substring(61, 63) !== '00') {
+        console.log(`Validación: longitud=${trama.length}, números=${/^\d+$/.test(trama)}, estado=${trama.substring(61, 63)}`);
+    }
+
+    procesandoTrama = true;
+
+    if (trama) {
+        fetch('/api/trama', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trama })
+        })
+        .then(res => res.json())
+        .then(data => {
+            procesandoTrama = false;
+
+            if (data.success) {
+                const estado = data.estado || '01';
+                const mensaje = data.mensaje || 'Transacción aprobada';
+                const monto = data.monto ? `$${data.monto.toFixed(2)}` : '';
+                const referenciaBanco = data.referencia || '';
+                const fechaActual = new Date().toLocaleString();
+
+                let config = {};
+
+                switch(estado) {
+                    case '01':
+                        config = {
+                            title: '¡Transacción Aprobada!',
+                            html: `
+                                <div style="text-align: left; padding: 10px 20px;">
+                                    <p><strong>Estado:</strong> ${mensaje}</p>
+                                    <p><strong>Referencia:</strong> ${referenciaBanco}</p>
+                                    ${monto ? `<p><strong>Monto:</strong> ${monto}</p>` : ''}
+                                    <p><strong>Fecha:</strong> ${fechaActual}</p>
+                                </div>`,
+                            icon: 'success',
+                            confirmButtonColor: '#28a745',
+                            confirmButtonText: 'Aceptar'
+                        };
+                        break;
+                    case '02':
+                        config = {
+                            title: 'Transacción Rechazada',
+                            html: `<div style="text-align: left;"><p>${mensaje}</p><p><strong>Referencia:</strong> ${referenciaBanco}</p></div>`,
+                            icon: 'error',
+                            confirmButtonColor: '#dc3545'
+                        };
+                        break;
+                    case '03':
+                        config = {
+                            title: 'Sistema No Disponible',
+                            text: mensaje,
+                            icon: 'error',
+                            confirmButtonColor: '#dc3545'
+                        };
+                        break;
+                    case '04':
+                        config = {
+                            title: 'Operación Cancelada',
+                            text: mensaje,
+                            icon: 'info',
+                            confirmButtonColor: '#17a2b8'
+                        };
+                        break;
+                    case '05':
+                    case '06':
+                    case '07':
+                    case '08':
+                        config = {
+                            title: 'Advertencia',
+                            text: mensaje,
+                            icon: 'warning',
+                            confirmButtonColor: '#ffc107'
+                        };
+                        break;
+                    case '09':
+                        config = {
+                            title: 'Transacción Duplicada',
+                            text: mensaje,
+                            icon: 'info',
+                            confirmButtonColor: '#17a2b8'
+                        };
+                        break;
+                    default:
+                        config = {
+                            title: 'Información',
+                            text: mensaje,
+                            icon: 'info',
+                            confirmButtonColor: '#17a2b8'
+                        };
+                }
+
+                Swal.fire(config);
+            } else {
+                const errorMsg = data.error || data.mensaje || 'Error al procesar la trama';
+                Swal.fire({
+                    title: 'Error en la transacción',
+                    text: errorMsg,
+                    icon: 'error',
+                    confirmButtonColor: '#dc3545'
+                });
             }
+        })
+        .catch((error) => {
+            procesandoTrama = false;
+
+            console.error('Error en la llamada fetch:', error);
+
+            Swal.fire({
+                title: 'Error de comunicación',
+                html: `
+                    <div style="text-align: left; padding: 10px;">
+                        <p>No se pudo recibir la respuesta del servidor.</p>
+                        <p><strong>IMPORTANTE:</strong> Es posible que la trama haya llegado al banco correctamente.</p>
+                        <p>Verifique en el sistema bancario antes de reenviar la trama.</p>
+                    </div>`,
+                icon: 'warning',
+                confirmButtonColor: '#ffc107'
+            });
         });
 
-        if (response.ok) {
-            sessionStorage.removeItem('userInfo');
-            window.location.href = '/login';
-        }
-    } catch (error) {
-        console.error('Error al cerrar sesión:', error);
+        // Mostrar indicador de carga mientras se envía la trama
+        const originalText = sendButton.innerHTML;
+        sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        sendButton.disabled = true;
+
+        setTimeout(() => {
+            sendButton.innerHTML = originalText;
+            sendButton.disabled = false;
+            procesandoTrama = false;
+        }, 5000);
+
+        appendMessage(trama, false);
+        messageInput.value = '';
     }
 }
 
-// Solicitar lista de usuarios al cargar
-socket.emit('request users list');
+// Agrega un mensaje al historial del chat
+function appendMessage(message, isReceived = false) {
+    const div = document.createElement('div');
+    div.className = 'message' + (isReceived ? ' received' : ' sent');
+    div.textContent = message;
+    messagesContainer.appendChild(div);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}

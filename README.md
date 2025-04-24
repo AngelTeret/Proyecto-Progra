@@ -245,6 +245,178 @@ graph TD
 
 ---
 
+# 💬 Chat de Tramas Bancarias
+
+## 📝 Propósito y características
+El **Chat de Tramas Bancarias** es una interfaz especializada que permite el envío directo de tramas bancarias al sistema, sin necesidad de pasar por el flujo de compra tradicional. Esta herramienta está diseñada principalmente para:
+
+- **Pruebas técnicas:** Permite a los desarrolladores y testers enviar tramas predefinidas para validar el comportamiento del sistema bancario.
+- **Depuración:** Facilita el diagnóstico de problemas en la comunicación con el sistema bancario.
+- **Demostraciones:** Ideal para mostrar el funcionamiento del protocolo de comunicación bancaria sin necesidad de crear pedidos reales.
+- **Monitoreo:** Permite verificar la disponibilidad y respuesta del sistema bancario en tiempo real.
+
+## 🔄 Flujo de funcionamiento del Chat de Tramas
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Chat as Chat Interface
+    participant Backend as Express Backend
+    participant PagoController as Controlador de Pagos
+    participant UtilsBanco as Utilidades Bancarias
+    participant Banco as Sistema Bancario (Java)
+    
+    Usuario->>Chat: Ingresa trama de 63 dígitos
+    Chat->>Chat: Validación local (formato, longitud)
+    Usuario->>Chat: Presiona enviar
+    Chat->>Backend: Petición HTTP POST a /api/trama
+    Backend->>PagoController: Procesa trama (mismo flujo que pago.html)
+    PagoController->>UtilsBanco: Envía trama al sistema bancario
+    UtilsBanco->>Banco: Envía trama mediante Child Process
+    Banco-->>UtilsBanco: Devuelve respuesta (trama con estado)
+    UtilsBanco-->>PagoController: Devuelve respuesta formateada
+    PagoController-->>Backend: Procesa respuesta (éxito/error)
+    Backend-->>Chat: Respuesta JSON con resultado
+    Chat-->>Usuario: Muestra SweetAlert con resultado y detalles
+```
+
+## 🧩 Componentes principales del sistema
+
+### 1. **Interfaz de Chat (`chat.html` y `chat.js`)**
+- **Vista minimalista** enfocada en la entrada y visualización de tramas bancarias
+- **Validación en tiempo real** de la estructura y formato de la trama
+- **Botón de generación automática** de tramas válidas con la fecha actual
+- **Visualización de tramas enviadas y recibidas** como mensajes en la interfaz
+- **Feedback visual mediante SweetAlert2** que muestra el resultado detallado de la transacción
+
+### 2. **Endpoint dedicado en el Backend (`/api/trama`)**
+- **Recibe tramas en formato JSON** mediante peticiones POST
+- **Reutiliza la lógica existente** de `pagoController.js` y `utilsBanco.js`
+- **Adapta la respuesta** al formato esperado por la interfaz de chat
+- **Procesa la respuesta del banco** y extrae información relevante (estado, referencia, etc.)
+
+### 3. **Gestión de respuestas y errores**
+- **Sistema de códigos de estado** para interpretar la respuesta del banco (01-09)
+- **Alertas visuales personalizadas** según el tipo de respuesta
+- **Manejo de errores de comunicación** que informa cuando una trama pudo haber llegado al banco pero no se recibió confirmación
+- **Prevención de envíos duplicados** mediante bloqueo del botón durante el procesamiento
+
+## 📋 Especificaciones técnicas
+
+### Validaciones implementadas
+- **Longitud exacta de 63 dígitos** verificada antes de enviar
+- **Solo caracteres numéricos** (0-9) permitidos
+- **Estado inicial '00'** al final de la trama para envíos nuevos
+- **Formato de fecha válido** en los primeros 14 caracteres (AAAAMMDDHHMMSS)
+- **Prevención de múltiples envíos** mientras se procesa una trama
+
+### Estados de respuesta y visualización
+
+| Código | Estado | Visualización | Descripción |
+|--------|--------|---------------|-------------|
+| 01 | Aprobada | ✅ Verde, icono check | Transacción exitosa |
+| 02 | Rechazada | ❌ Rojo, icono error | Transacción rechazada por el banco |
+| 03 | Sistema fuera de servicio | ❌ Rojo, icono error | Banco no disponible |
+| 04 | Cancelada por usuario | ℹ️ Azul, icono info | El usuario canceló la operación |
+| 05 | Sin fondos suficientes | ⚠️ Amarillo, icono warning | Fondos insuficientes |
+| 06 | Cliente no identificado | ⚠️ Amarillo, icono warning | Cliente no encontrado |
+| 07 | Empresa/Sucursal inválida | ⚠️ Amarillo, icono warning | Datos de comercio incorrectos |
+| 08 | Monto inválido | ⚠️ Amarillo, icono warning | Problema con el monto |
+| 09 | Transacción duplicada | ℹ️ Azul, icono info | Trama ya procesada anteriormente |
+
+### Estructura de la respuesta visual (SweetAlert2)
+```html
+<div style="text-align: left; padding: 10px 20px;">
+   <p><strong>Estado:</strong> Transacción aprobada</p>
+   <p><strong>Referencia:</strong> 123456789012</p>
+   <p><strong>Monto:</strong> $123.45</p>
+   <p><strong>Fecha:</strong> 23/4/2025, 9:15:24 p.m.</p>
+</div>
+```
+
+## 🔧 Diagrama de componentes del Chat de Tramas
+
+```mermaid
+graph TD
+    A[Chat Interface] -->|1. Validación local| B[Generador de Tramas]
+    A -->|2. POST /api/trama| C[Express Endpoint]
+    C -->|3. Procesa trama| D[pagoController.js]
+    D -->|4. Envía al banco| E[utilsBanco.js]
+    E -->|5. Spawns proceso| F[Java ClienteBanco]
+    F -->|6. Conexión TCP/IP| G[Servidor Banco]
+    G -->|7. Respuesta| F
+    F -->|8. Respuesta| E
+    E -->|9. Procesa respuesta| D
+    D -->|10. Formato JSON| C
+    C -->|11. Respuesta HTTP| A
+    A -->|12. Muestra resultado| H[SweetAlert2]
+    
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style G fill:#bbf,stroke:#333,stroke-width:2px
+    style H fill:#bfb,stroke:#333,stroke-width:2px
+```
+
+## 📊 Ventajas y casos de uso
+
+### Ventajas del Chat de Tramas
+- **Depuración más rápida** de problemas de comunicación bancaria
+- **Testeo directo** sin necesidad de crear productos o completar flujos de compra
+- **Interfaz dedicada** para personal técnico y administradores
+- **Feedback visual consistente** con el resto del sistema (mismo estilo que en pago.html)
+- **Reutilización de código** mediante el aprovechamiento de los componentes existentes
+
+### Casos de uso típicos
+1. **Desarrollo y pruebas:** Envío de tramas específicas para verificar el manejo de diferentes escenarios (fondos insuficientes, transacción duplicada, etc.)
+2. **Demostración a clientes:** Visualización del proceso de comunicación bancaria sin afectar datos reales
+3. **Diagnóstico en producción:** Verificación rápida de la conectividad con el sistema bancario
+4. **Capacitación:** Herramienta educativa para comprender el funcionamiento del protocolo bancario
+
+## 🔐 Consideraciones de seguridad
+- El chat está configurado como **acceso público** pero puede restringirse a usuarios administradores si es necesario
+- Las tramas contienen **validaciones estrictas** para evitar inyecciones o ataques
+- El sistema registra en los **logs todas las operaciones** para auditoría
+- El cliente valida **localmente el formato** para reducir carga innecesaria al servidor
+
+## 🔍 Detalles de implementación técnica
+
+### Formato de trama bancaria
+La trama consiste en una cadena de 63 caracteres numéricos estructurados de la siguiente manera:
+- **Caracteres 1-14:** Fecha y hora en formato AAAAMMDDHHMMSS (ej. 20250423213000 para 23/04/2025 21:30:00)
+- **Caracteres 15-26:** Número de referencia única para la transacción (12 dígitos)
+- **Caracteres 27-36:** Identificador del comercio/sucursal (10 dígitos)
+- **Caracteres 37-46:** Identificador del cliente (10 dígitos)
+- **Caracteres 47-60:** Monto con 2 decimales, sin punto decimal (ej. 000000012345 para $123.45)
+- **Caracteres 61-63:** Código de estado (00 para envío inicial, 01-09 para respuestas)
+
+### Flujo detallado del procesamiento
+1. **Creación manual o automática de trama:**
+   - El usuario puede ingresar manualmente una trama de 63 dígitos
+   - Alternativamente, puede generarla con el botón "Generar Trama" que completa la fecha actual y valores aleatorios válidos
+
+2. **Validación en el cliente:**
+   - Se verifica que la trama tenga exactamente 63 dígitos
+   - Se comprueba que solo contenga caracteres numéricos
+   - Se confirma que el estado sea "00" para envíos nuevos
+   - Se valida que el formato de fecha en los primeros 14 caracteres sea correcto
+
+3. **Envío al backend:**
+   - La trama se envía mediante una petición POST al endpoint `/api/trama`
+   - Se bloquea el botón de envío para prevenir múltiples envíos mientras se procesa
+
+4. **Procesamiento en el servidor:**
+   - El backend recibe la trama y utiliza el mismo controlador de pagos existente
+   - Se reutiliza la lógica de procesamiento que ya se usa para los pagos regulares
+
+5. **Comunicación con el sistema bancario:**
+   - Se genera un proceso Java para enviar la trama al banco
+   - El sistema bancario procesa la solicitud y devuelve una respuesta
+
+6. **Visualización del resultado:**
+   - Se muestra una alerta estilizada con SweetAlert2 con el resultado
+   - El color e ícono varían según el código de respuesta del banco
+   - Se muestran los detalles importantes: estado, referencia, monto y fecha
+
+
 ## 🔗 Rutas importantes del sistema
 
 ### Sitio principal (Frontend)

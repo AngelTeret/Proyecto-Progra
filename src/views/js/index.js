@@ -2,19 +2,6 @@ const socket = io('http://localhost:3000');
 
 let user = null;
 
-// **Login automático para pruebas**
-fetch('http://localhost:3000/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: 'angel', password: '1234' }) // Usa credenciales reales
-})
-.then(res => res.json())
-.then(data => {
-    if (data.token) {
-        user = data.user;
-        console.log("Usuario autenticado:", user);
-    }
-});
 
 // **Enviar mensaje**
 function sendMessage() {

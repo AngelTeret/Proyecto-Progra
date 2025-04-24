@@ -1,3 +1,4 @@
+/*
 async function register() {
     const username = document.getElementById("regUsername").value;
     const password = document.getElementById("regPassword").value;
@@ -36,19 +37,6 @@ async function login() {
     const username = document.getElementById("logUsername").value;
     const password = document.getElementById("logPassword").value;
 
-    if (!username || !password) {
-        document.getElementById("message").innerText = "Por favor completa todos los campos";
-        return;
-    }
-
-    try {
-        const response = await fetch('/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json();
         
         if (!data.error) {
             // Guardar información del usuario en sessionStorage
@@ -60,7 +48,7 @@ async function login() {
             
             // Redirigir al chat
             console.log('Login exitoso, redirigiendo...');
-            window.location.href = '/chat';
+            // Eliminado: redirección innecesaria a chat
         } else {
             document.getElementById("message").innerText = data.error;
         }
@@ -69,3 +57,4 @@ async function login() {
         document.getElementById("message").innerText = "Error al conectar con el servidor";
     }
 }
+*/
