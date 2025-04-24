@@ -11,7 +11,7 @@ const DB_CONFIG = {
 
 // Configuración del banco
 const BANCO_CONFIG = {
-    host: '192.168.56.1',  // Cambiado a localhost para pruebas locales
+    host: '192.168.1.33',  // Cambiado a localhost para pruebas locales
     puerto: 5000,
     // Valores por defecto para las tramas
     defaults: {

@@ -8,3 +8,22 @@
 [2025-04-21T08:58:06.701Z] info: Respuesta banco | Estado: 01 | Descripción: 202504210258060101000101019902314950100001525000099246508603301
 [2025-04-21T08:58:06.702Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 139922467083 | Cliente: Henry Angel Gabriel
 [2025-04-21T08:58:06.704Z] info: Transacción exitosa | Referencia: 139922467083 | Cliente: Henry Angel Gabriel | Monto: 1525
+[2025-04-22T03:52:30.627Z] info: Inicio de pago | Cliente: Daniela  | Monto: 735 | Trama: 202504212152300104000101027891082620100000735000041567259203900
+[2025-04-22T03:52:30.651Z] info: Datos de trama extraídos | Referencia: 415672592039 | Cliente: Daniela 
+[2025-04-22T03:52:30.816Z] error: Error crítico al procesar pago: Error al iniciar Java: spawn C:\Program Files\Java\jdk-24\bin\java.exe ENOENT
+[2025-04-22T03:52:43.242Z] info: Inicio de pago | Cliente: Daniela  | Monto: 735 | Trama: 202504212152420101000101027891082620100000735000041567259203900
+[2025-04-22T03:52:43.263Z] info: Datos de trama extraídos | Referencia: 415672592039 | Cliente: Daniela 
+[2025-04-22T03:52:43.282Z] error: Error crítico al procesar pago: Error al iniciar Java: spawn C:\Program Files\Java\jdk-24\bin\java.exe ENOENT
+[2025-04-22T04:09:07.656Z] info: Inicio de pago | Cliente: Daniela  | Monto: 735 | Trama: 202504212209070101000101027891082620100000735000071525572474900
+[2025-04-22T04:09:07.724Z] info: Datos de trama extraídos | Referencia: 715255724749 | Cliente: Daniela 
+[2025-04-22T04:09:09.272Z] info: Respuesta banco | Estado: 01 | Descripción: 202504212209090101000101027891082620100000735000071525572474901
+[2025-04-22T04:09:09.278Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 948851981282 | Cliente: Daniela 
+[2025-04-22T04:09:09.313Z] info: Transacción exitosa | Referencia: 948851981282 | Cliente: Daniela  | Monto: 735
+[2025-04-23T04:44:15.487Z] info: Inicio de pago | Cliente: Daniela | Monto: 390 | Trama: 202504222244140101000101075453254460100000390000054811517867100
+[2025-04-23T04:44:15.536Z] info: Datos de trama extraídos | Referencia: 548115178671 | Cliente: Daniela
+[2025-04-23T04:44:18.241Z] error: Error crítico al procesar pago: No se pudo encontrar una respuesta válida del banco
+[2025-04-23T04:44:55.440Z] info: Inicio de pago | Cliente: fg | Monto: 390 | Trama: 202504222244550101000101076756465450100000390000014722643453700
+[2025-04-23T04:44:55.446Z] info: Datos de trama extraídos | Referencia: 147226434537 | Cliente: fg
+[2025-04-23T04:44:57.361Z] info: Respuesta banco | Estado: 01 | Descripción: 202504222244570101000101076756465450100000390000014722643453701
+[2025-04-23T04:44:57.366Z] info: Resultado transacción | Estado: 01 (Aprobada) | Referencia: 980376083721 | Cliente: fg
+[2025-04-23T04:44:57.393Z] info: Transacción exitosa | Referencia: 980376083721 | Cliente: fg | Monto: 390
