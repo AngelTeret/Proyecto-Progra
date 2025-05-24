@@ -18,7 +18,7 @@ app.use(session({
     secret: 'secret',
     resave: false,
     saveUninitialized: true,
-    cookie: { 
+    cookie: {
         secure: false,
         maxAge: 24 * 60 * 60 * 1000 // 24 horas
     }
@@ -38,13 +38,13 @@ app.use('/', rutasTienda);
 // Configurar Socket.IO
 io.on('connection', (socket) => {
     console.log('Usuario conectado a Socket.IO');
-    
+
     // Evento para recibir mensajes del chat
     socket.on('chat message', (msg) => {
         console.log('Mensaje recibido en socket:', msg);
         io.emit('chat message', msg);
     });
-    
+
     // Desconexión
     socket.on('disconnect', () => {
         console.log('Usuario desconectado');

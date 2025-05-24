@@ -9,39 +9,39 @@ let btnCerrar;
 // Configura el flujo principal del carrito y la navegación
 // Permite alternar logs de desarrollo mediante el flag DEBUG
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const DEBUG = false; // Flag para habilitar/deshabilitar logs de desarrollo
     if (DEBUG) console.log('DOM cargado - Inicializando carrito');
-    
+
     // Sincroniza el carrito inicial desde localStorage para mantener persistencia entre recargas
     carrito = JSON.parse(localStorage.getItem('carrito')) || [];
     if (DEBUG) console.log('Carrito cargado:', carrito);
-    
+
     // Obtiene referencias a los elementos clave de la interfaz para el flujo de carrito/modal
     modal = document.getElementById('modalCarrito');
     btnCarrito = document.getElementById('btnCarrito');
     btnCerrar = document.querySelector('.close');
     const btnVerificar = document.querySelector('.modern-cart-btn-checkout');
-    
+
     // Listeners para interacción con el carrito y navegación
     if (btnCarrito) {
-        btnCarrito.addEventListener('click', function(e) {
+        btnCarrito.addEventListener('click', function (e) {
             e.preventDefault();
             if (DEBUG) console.log('Botón carrito clickeado');
             abrirModalCarrito();
         });
     }
-    
+
     if (btnCerrar) {
-        btnCerrar.addEventListener('click', function() {
+        btnCerrar.addEventListener('click', function () {
             if (DEBUG) console.log('Cerrar modal');
             cerrarModalCarrito();
         });
     }
-    
+
     // Agregar listener al botón VERIFICAR
     if (btnVerificar) {
-        btnVerificar.addEventListener('click', function() {
+        btnVerificar.addEventListener('click', function () {
             if (DEBUG) console.log('Redirigiendo a página de pago...');
             cerrarModalCarrito(); // Cerrar el modal del carrito primero
             // Asegurarse de usar la ruta correcta configurada en Express
@@ -50,30 +50,30 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         if (DEBUG) console.warn('No se encontró el botón de verificar');
     }
-    
+
     // Inicializa el estado visual del carrito al cargar la página
     actualizarCarritoModal();
     actualizarContadorCarrito();
-    
+
     // Permite cerrar el modal del carrito haciendo clic fuera de él
-    window.addEventListener('click', function(event) {
+    window.addEventListener('click', function (event) {
         if (event.target === modal) {
             cerrarModalCarrito();
         }
     });
-    
+
     // Carga inicial de productos en la página de productos
     cargarProductos();
-    
+
     // Refuerza la sincronización visual del carrito tras carga inicial
     actualizarContadorCarrito();
     actualizarCarritoModal();
-    
+
     // Monitoreo periódico del carrito para detectar y reflejar cambios hechos en otras pestañas o ventanas
     if (DEBUG) console.log('Configurando monitoreo del carrito');
     let ultimoEstadoCarrito = localStorage.getItem('carrito') || '[]';
-    
-    const intervaloMonitoreoCarrito = setInterval(function() {
+
+    const intervaloMonitoreoCarrito = setInterval(function () {
         const estadoActual = localStorage.getItem('carrito') || '[]';
         // Solo actualiza la UI si el carrito cambió realmente
         if (ultimoEstadoCarrito !== estadoActual) {
@@ -104,10 +104,10 @@ function agregarAlCarrito(idProducto) {
             }
 
             console.log('Producto obtenido:', producto);
-            
+
             // Asegurar que estamos usando la versión más reciente del carrito
             carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-            
+
             // Normalizar datos
             const prod = {
                 id_producto: producto.id_producto,
@@ -120,7 +120,7 @@ function agregarAlCarrito(idProducto) {
 
             // Buscar si el producto ya existe en el carrito
             const productoExistente = carrito.find(item => item.id_producto === prod.id_producto);
-            
+
             if (productoExistente) {
                 // Verificar stock
                 if (productoExistente.cantidad >= prod.stock) {
@@ -153,15 +153,15 @@ function agregarAlCarrito(idProducto) {
                 carrito.push(prod);
                 console.log('Agregado nuevo producto al carrito:', prod);
             }
-            
+
             // Guardar en localStorage y actualizar interfaz
             localStorage.setItem('carrito', JSON.stringify(carrito));
             console.log('Carrito actualizado en localStorage:', carrito);
-            
+
             // Actualizar interfaz inmediatamente
             actualizarContadorCarrito();
             actualizarCarritoModal();
-            
+
             // Mostrar notificación
             Swal.fire({
                 title: '¡Agregado!',
@@ -190,10 +190,10 @@ function agregarAlCarrito(idProducto) {
 // Cambia la cantidad de un producto en el carrito, respetando límites de stock
 function cambiarCantidad(idProducto, cambio) {
     console.log('Cambiando cantidad:', idProducto, 'cambio:', cambio);
-    
+
     // Asegurar que tenemos el carrito más actualizado
     carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    
+
     const item = carrito.find(prod => prod.id_producto === idProducto);
     if (!item) {
         console.error('Producto no encontrado en el carrito');
@@ -201,7 +201,7 @@ function cambiarCantidad(idProducto, cambio) {
     }
 
     console.log('Cantidad actual:', item.cantidad, 'stock:', item.stock);
-    
+
     // Calcular nueva cantidad respetando límites
     let nuevaCantidad = item.cantidad;
     if (cambio === -1 && nuevaCantidad > 1) {
@@ -209,19 +209,19 @@ function cambiarCantidad(idProducto, cambio) {
     } else if (cambio === 1 && nuevaCantidad < item.stock) {
         nuevaCantidad++;
     }
-    
+
     // Asegurar que está dentro de límites
     if (nuevaCantidad < 1) nuevaCantidad = 1;
     if (nuevaCantidad > item.stock) nuevaCantidad = item.stock;
-    
+
     // Actualizar cantidad
     item.cantidad = nuevaCantidad;
     console.log('Nueva cantidad:', item.cantidad);
-    
+
     // Guardar en localStorage
     localStorage.setItem('carrito', JSON.stringify(carrito));
     console.log('Carrito actualizado en localStorage');
-    
+
     // Actualizar la interfaz inmediatamente
     actualizarCarritoModal();
     actualizarContadorCarrito();
@@ -230,10 +230,10 @@ function cambiarCantidad(idProducto, cambio) {
 // Elimina un producto del carrito y actualiza la UI
 function eliminarDelCarrito(idProducto) {
     console.log('Eliminando producto del carrito:', idProducto);
-    
+
     // Asegurar que tenemos el carrito más actualizado
     carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    
+
     // Filtrar el producto
     carrito = carrito.filter(item => item.id_producto !== idProducto);
     localStorage.setItem('carrito', JSON.stringify(carrito));
@@ -247,7 +247,7 @@ function abrirModalCarrito() {
     actualizarCarritoModal();
     if (modal) {
         modal.style.display = 'block';
-        
+
         // Posicionar el modal en la esquina superior derecha
         const modalContent = document.querySelector('.modal-content.modern-cart');
         if (modalContent) {
@@ -256,10 +256,10 @@ function abrirModalCarrito() {
             if (btnCarrito) {
                 const rect = btnCarrito.getBoundingClientRect();
                 modalContent.style.position = 'fixed';
-                modalContent.style.top = '60px'; // Justo debajo de la barra de navegación
+                modalContent.style.top = '0'; // Justo debajo de la barra de navegación
                 modalContent.style.right = '20px';
                 modalContent.style.margin = '0';
-                
+
                 // Asegurar que se muestre el botón VERIFICAR
                 const btnVerificar = document.querySelector('.modern-cart-btn-checkout');
                 if (btnVerificar) {
@@ -281,26 +281,26 @@ function cerrarModalCarrito() {
 function actualizarContadorCarrito() {
     // Calculamos el total de items una sola vez
     const totalItems = carrito.reduce((total, item) => total + item.cantidad, 0);
-    
+
     // Actualizar contador en la barra de navegación (botón CARRITO (X))
     const cantidadCarrito = document.getElementById('cantidadCarrito');
     if (cantidadCarrito) {
         cantidadCarrito.textContent = totalItems;
     }
-    
+
     // Actualizar contador para el modal (X artículo(s))
     const cantidadArticulos = document.getElementById('cantidadArticulos');
     if (cantidadArticulos) {
         cantidadArticulos.textContent = totalItems;
     }
-    
+
     // Actualizar también el contador flotante si existe
     const contador = document.querySelector('.contador-carrito');
     if (contador) {
         contador.textContent = totalItems;
         contador.style.display = totalItems > 0 ? 'block' : 'none';
     }
-    
+
     // Actualizar cualquier otro elemento que muestre la cantidad
     const totalElement = document.getElementById('total-amount');
     if (totalElement && totalItems === 0) {
@@ -317,16 +317,16 @@ function actualizarCarritoModal() {
         console.error('No se encontró el contenedor de items del carrito #items-carrito');
         return;
     }
-    
+
     // También actualizar el contador de artículos
     const cantidadArticulos = document.getElementById('cantidadArticulos');
     const totalElement = document.getElementById('total-amount');
-    
+
     // Reducir logs innecesarios - solo mostrar si hay elementos en el carrito
     if (carrito.length > 0) {
         console.log('Carrito actual en actualizarCarritoModal:', carrito);
     }
-    
+
     // Si el carrito está vacío, mostrar mensaje
     if (carrito.length === 0) {
         // Eliminar logs redundantes para el carrito vacío
@@ -336,7 +336,7 @@ function actualizarCarritoModal() {
                 <a href="/productos" class="btn-seguir-comprando">Seguir comprando</a>
             </div>
         `;
-        
+
         // Actualizar contador y total para carrito vacío
         if (cantidadArticulos) cantidadArticulos.textContent = '0';
         if (totalElement) totalElement.textContent = 'Q. 0.00';
@@ -345,21 +345,21 @@ function actualizarCarritoModal() {
 
     let total = 0;
     let cantidadTotal = 0;
-    
+
     console.log('Renderizando items del carrito:', carrito.length);
-    
+
     // Ahora usamos el selector correcto - itemsCarrito
     itemsCarrito.innerHTML = carrito.map(item => {
         const subtotal = item.precio * item.cantidad;
         total += subtotal;
         cantidadTotal += item.cantidad;
-        
+
         // Controles de cantidad: deshabilitar - si cantidad==1, deshabilitar + si cantidad==stock
         const minusDisabled = item.cantidad <= 1 ? 'disabled' : '';
         const plusDisabled = item.cantidad >= item.stock ? 'disabled' : '';
-        
+
         console.log(`Renderizando producto: ${item.nombre}, cantidad: ${item.cantidad}, precio: ${item.precio}`);
-        
+
         return `
             <div class="modern-cart-item">
                 <img src="${item.imagen || '/img/placeholder.png'}" alt="${item.nombre}" class="modern-cart-item-img">
@@ -381,17 +381,17 @@ function actualizarCarritoModal() {
     }).join('');
 
     console.log(`Total calculado: ${total.toFixed(2)}, cantidad total: ${cantidadTotal}`);
-    
+
     if (totalElement) {
         totalElement.textContent = `Q. ${total.toFixed(2)}`;
     }
     if (cantidadArticulos) {
         cantidadArticulos.textContent = cantidadTotal.toString();
     }
-    
+
 
     actualizarContadorCarrito();
-    
+
     console.log('Modal del carrito actualizado correctamente');
 }
 
@@ -440,7 +440,7 @@ async function cargarProductos() {
     try {
         actualizarContadorCarrito();
         const response = await fetch('/api/productos');
-        
+
         if (!response.ok) {
             throw new Error('Error al cargar los productos');
         }
@@ -522,30 +522,30 @@ function cargarCarrito() {
 function cargarPago() {
     // Asegurar que estamos usando la versión más actualizada del carrito
     carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    
+
     // Actualizar contador del carrito en la cabecera
     actualizarContadorCarrito();
-    
+
     // Obtener el contenedor del resumen
     const resumen = document.getElementById('resumenPago');
     if (!resumen) {
         console.error('No se encontró el elemento resumenPago');
         return;
     }
-    
+
     // Si el carrito está vacío, mostrar mensaje
     if (!carrito.length) {
         resumen.innerHTML = '<p>No hay productos en tu carrito.</p>';
         return;
     }
-    
+
     // Calcular totales
     let subtotal = 0;
     let html = '';
-    
+
     // Crear un contenedor con desplazamiento para los productos
     html += '<div class="pago-items-container pago-items-compact">';
-    
+
     // Generar HTML para cada producto
     html += carrito.map(item => {
         const itemTotal = item.precio * item.cantidad;
@@ -560,13 +560,13 @@ function cargarPago() {
             <div class="pago-item-price">Q. ${(item.precio * item.cantidad).toFixed(2)}</div>
         </div>`;
     }).join('');
-    
+
     // Cerrar el contenedor de productos
     html += '</div>';
-    
+
     // Agregar un divisor antes del resumen
     html += '<div class="pago-divider"></div>';
-    
+
     // Resumen de costos con diseño mejorado
     html += `
     <div class="pago-summary">
@@ -577,7 +577,7 @@ function cargarPago() {
     </div>
     <button class="pago-submit" onclick="enviarPago(event)">FINALIZAR COMPRA</button>
     `;
-    
+
     // Actualizar el contenido del resumen
     resumen.innerHTML = html;
 }
@@ -624,13 +624,13 @@ function enviarPago(event) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosPago)
     })
-    .then(res => res.json())
-    .then(respuesta => {
-        mostrarResultadoTransaccion(respuesta);
-    })
-    .catch(error => {
-        mostrarErrorTransaccion(error);
-    });
+        .then(res => res.json())
+        .then(respuesta => {
+            mostrarResultadoTransaccion(respuesta);
+        })
+        .catch(error => {
+            mostrarErrorTransaccion(error);
+        });
 }
 
 // Mostrar el resultado de la transacción usando SweetAlert2
@@ -640,10 +640,10 @@ function mostrarResultadoTransaccion(respuesta) {
     console.log('Mostrando resultado de la transacción:', respuesta);
     document.querySelector('.procesando-pago').style.display = 'none';
     document.getElementById('modalPago').style.display = 'none'; // Ocultar modal de pago
-    
+
     // Determinar el tipo de icono y color según el código de estado
     let icon, title, confirmButtonColor;
-    
+
     if (respuesta.exitoso) {
         icon = 'success';
         title = '¡Pago Exitoso!';
@@ -674,7 +674,7 @@ function mostrarResultadoTransaccion(respuesta) {
         }
         title = 'Transacción no completada';
     }
-    
+
     Swal.fire({
         icon: icon,
         title: title,
@@ -712,7 +712,7 @@ function mostrarErrorTransaccion(error) {
     console.error('Mostrando error de la transacción:', error);
     document.querySelector('.procesando-pago').style.display = 'none';
     document.getElementById('modalPago').style.display = 'none'; // Ocultar modal de pago
-    
+
     Swal.fire({
         icon: 'error',
         title: 'Error de comunicación',
