@@ -1,17 +1,6 @@
 /**
- * Herramienta para probar los diferentes estados de respuesta del banco
- * 
- * Estados de transacción:
- * 00 = Pendiente (estado inicial al enviar)
- * 01 = Aprobada
- * 02 = Rechazada
- * 03 = Sistema fuera de servicio
- * 04 = Cancelada por el usuario
- * 05 = La cuenta no cuenta con los fondos suficientes
- * 06 = Cliente no identificado
- * 07 = Empresa/Sucursal no válida
- * 08 = Monto inválido
- * 09 = Transacción duplicada
+ * Script para probar estados de respuesta del banco.
+ * Estados: 00=Pendiente, 01=Aprobada, 02=Rechazada, 03=Fuera de servicio, 04=Cancelada, 05=Sin fondos, 06=Cliente no identificado, 07=Empresa/Sucursal inválida, 08=Monto inválido, 09=Duplicada
  */
 const { spawn } = require('child_process');
 const path = require('path');

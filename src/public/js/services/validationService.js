@@ -1,4 +1,4 @@
-
+// Validaciones de formularios y datos
 const validationService = {
     /**
      * Valida un formulario HTML verificando si todos los campos requeridos están completos

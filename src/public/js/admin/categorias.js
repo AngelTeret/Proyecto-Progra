@@ -28,7 +28,6 @@ async function cargarCategorias() {
             mostrarError(error.mensaje);
         }
     } catch (error) {
-        console.error('Error al cargar categorías:', error);
         mostrarError('Error al cargar las categorías');
     }
 }
@@ -37,9 +36,6 @@ async function cargarCategorias() {
 function filtrarCategorias() {
     const busqueda = document.getElementById('buscarCategoria').value.toLowerCase();
     const estado = document.getElementById('filtroEstado').value;
-    
-    console.log('Filtro - Búsqueda:', busqueda, 'Estado:', estado);
-    console.log('Datos actuales:', categoriasData);
     
     const categoriasFiltradas = categoriasData.filter(categoria => {
         // Verificar coincidencia de búsqueda en nombre o descripción
@@ -63,13 +59,11 @@ function filtrarCategorias() {
             
             // Comparar los booleanos directamente
             coincideEstado = categoriaActiva === esActivo;
-            console.log('Comparando estado:', categoria.nombre, 'Estado categoría:', categoriaActiva, 'Estado filtro:', esActivo, 'Coincide:', coincideEstado);
         }
         
         return coincideBusqueda && coincideEstado;
     });
     
-    console.log('Categorías filtradas:', categoriasFiltradas);
     actualizarTablaCategorias(categoriasFiltradas);
     actualizarPaginacion(categoriasFiltradas.length);
 }
@@ -79,8 +73,6 @@ function actualizarTablaCategorias(categorias = categoriasData) {
     const inicio = (paginaActual - 1) * categoriasPorPagina;
     const fin = inicio + categoriasPorPagina;
     const categoriasPagina = categorias.slice(inicio, fin);
-    
-    console.log('Renderizando categorías:', categoriasPagina);
     
     const tbody = document.getElementById('tablaCategorias');
     tbody.innerHTML = categoriasPagina.map(categoria => {
@@ -169,8 +161,6 @@ function mostrarModalCategoria(categoria = null) {
     titulo.textContent = categoria ? 'Editar Categoría' : 'Nueva Categoría';
     form.reset();
     
-    console.log('Mostrando formulario para categoría:', categoria);
-    
     if (categoria) {
         document.getElementById('idCategoria').value = categoria.id_categoria;
         document.getElementById('nombre').value = categoria.nombre;
@@ -187,7 +177,6 @@ function mostrarModalCategoria(categoria = null) {
             estadoValor = '0'; // Inactivo
         }
         
-        console.log('Estado a seleccionar:', estadoValor, 'Estado original:', categoria.estado);
         selectEstado.value = estadoValor;
     } else {
         document.getElementById('idCategoria').value = '';
@@ -258,7 +247,6 @@ async function guardarCategoria(event) {
             });
         }
     } catch (error) {
-        console.error('Error al guardar categoría:', error);
         Swal.fire({
             title: 'Error',
             text: `Error al ${idCategoria ? 'actualizar' : 'crear'} la categoría. Por favor intente de nuevo.`,
@@ -283,11 +271,9 @@ async function editarCategoria(id) {
             const categoria = await response.json();
             mostrarModalCategoria(categoria);
         } else {
-            const error = await response.json();
             mostrarError(error.mensaje);
         }
     } catch (error) {
-        console.error('Error al cargar categoría:', error);
         mostrarError('Error al cargar la categoría');
     }
 }
@@ -338,11 +324,9 @@ async function eliminarCategoria(id) {
                 confirmButtonColor: '#28a745'
             });
         } else {
-            const error = await response.json();
             mostrarError(error.mensaje || `Error al eliminar la categoría "${categoria.nombre}"`);
         }
     } catch (error) {
-        console.error('Error al eliminar categoría:', error);
         mostrarError('Error al intentar eliminar la categoría');
     }
 }

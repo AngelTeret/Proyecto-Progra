@@ -1,3 +1,4 @@
+// Servicio de UI para carrito y pagos
 const uiService = {
     /**
      * Actualiza el contador del carrito en la interfaz
@@ -193,11 +194,11 @@ const uiService = {
                 titulo = "¡Pago Aprobado!";
                 mensaje = "Tu transacción ha sido aprobada. Gracias por tu compra.";
                 icono = "success";
-                btnTexto = "Regresar al inicio";
+                btnTexto = "Ver Factura";
                 accionConfirmar = () => {
-                    // Vaciar carrito y redirigir al inicio
+                    // Vaciar carrito y redirigir a la factura
                     localStorage.removeItem('carrito');
-                    window.location.href = '/';
+                    window.location.href = `/factura/${respuesta.id_factura}`;
                 };
                 break;
                 
@@ -265,12 +266,21 @@ const uiService = {
         }
         
         // Mostrar notificación SweetAlert
-        Swal.fire({
+        const swalConfig = {
             title: titulo,
             text: mensaje,
             icon: icono,
             confirmButtonText: btnTexto
-        }).then((result) => {
+        };
+        
+        // Para el pago aprobado, evitar que se cierre haciendo click fuera
+        if (estado === '01') {
+            swalConfig.allowOutsideClick = false;
+            swalConfig.allowEscapeKey = false;
+            swalConfig.allowEnterKey = false;
+        }
+        
+        Swal.fire(swalConfig).then((result) => {
             if (result.isConfirmed && typeof accionConfirmar === 'function') {
                 accionConfirmar();
             }
@@ -316,6 +326,82 @@ const uiService = {
             icon: 'error',
             confirmButtonText: 'Aceptar'
         });
+    },
+    
+    /**
+     * Inicializa el formulario de pago con valores predeterminados
+     */
+    inicializarFormularioPago: function() {
+        // Valores predeterminados
+        document.getElementById('tipoTransaccion').value = '01'; // Pago
+        document.getElementById('canalTerminal').value = '04';   // POS
+        document.getElementById('idEmpresa').value = '0529';     // ID Empresa fijo
+        document.getElementById('idSucursal').value = '13';      // ID Sucursal fijo
+        document.getElementById('tipoMoneda').value = '01';      // GTQ (Quetzal)
+        
+        // Generar número de referencia automáticamente
+        const fechaHora = new Date();
+        const referencia = fechaHora.getFullYear().toString().substring(2) +
+                          (fechaHora.getMonth() + 1).toString().padStart(2, '0') +
+                          fechaHora.getDate().toString().padStart(2, '0') +
+                          fechaHora.getHours().toString().padStart(2, '0') +
+                          fechaHora.getMinutes().toString().padStart(2, '0') +
+                          fechaHora.getSeconds().toString().padStart(2, '0');
+        document.getElementById('numeroReferencia').value = referencia;
+        
+        // Asegurar que los campos estén bloqueados
+        document.getElementById('tipoTransaccion').disabled = true;
+        document.getElementById('canalTerminal').disabled = true;
+        document.getElementById('tipoMoneda').disabled = true;
+        document.getElementById('numeroReferencia').readOnly = true;
+        
+        // Ocultar campos de empresa y sucursal
+        const camposOcultos = ['idEmpresa', 'idSucursal'].forEach(id => {
+            const campo = document.getElementById(id).closest('.campo-modal');
+            if (campo) campo.style.display = 'none';
+        });
+    },
+
+    /**
+     * Valida y prepara los datos del formulario para el envío
+     * @returns {Object|null} Datos del formulario o null si hay errores
+     */
+    obtenerDatosFormularioPago: function() {
+        const codigoCliente = document.getElementById('codigoCliente').value;
+        const tipoTransaccion = document.getElementById('tipoTransaccion').value;
+        const canalTerminal = document.getElementById('canalTerminal').value;
+        const tipoMoneda = document.getElementById('tipoMoneda').value;
+        
+        // Validar que se hayan seleccionado todas las opciones requeridas
+        if (!tipoTransaccion || !canalTerminal || !tipoMoneda) {
+            Swal.fire({
+                title: 'Error de validación',
+                text: 'Por favor selecciona todas las opciones requeridas',
+                icon: 'error'
+            });
+            return null;
+        }
+        
+        // Validar código de cliente
+        if (!codigoCliente || !/^\d{10}$/.test(codigoCliente)) {
+            Swal.fire({
+                title: 'Error de validación',
+                text: 'Por favor ingresa un código de cliente válido (10 dígitos)',
+                icon: 'error'
+            });
+            return null;
+        }
+
+        // Retornar datos con valores seleccionados por el usuario
+        return {
+            tipoTransaccion: tipoTransaccion,
+            canalTerminal: canalTerminal,
+            idEmpresa: '0529',
+            idSucursal: '13',
+            codigoCliente: codigoCliente,
+            tipoMoneda: tipoMoneda,
+            numeroReferencia: document.getElementById('numeroReferencia').value
+        };
     }
 };
 

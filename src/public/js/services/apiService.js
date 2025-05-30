@@ -1,3 +1,4 @@
+// Servicio para peticiones API y comunicación con backend
 const apiService = {
     /**
      * Realiza una petición GET a la API
@@ -53,9 +54,6 @@ const apiService = {
      * @returns {Promise<Object>} - Promesa con la respuesta del banco
      */
     enviarTramaAlBanco: async function(trama, montoTotal) {
-        console.log('Enviando trama al banco:', trama);
-        console.log('Monto total de la transacción:', montoTotal);
-        
         // Obtener los datos del formulario de contacto
         const datosContacto = {
             nombre: document.getElementById('nombrePila').value,
@@ -65,14 +63,16 @@ const apiService = {
             telefono: document.getElementById('telefono').value
         };
         
-        console.log('Datos de contacto a enviar:', datosContacto);
+        // Obtener el número de referencia del modal
+        const numeroReferencia = document.getElementById('numeroReferencia').value;
         
         try {
             return await this.post('/api/pago/procesar', {
                 trama: trama,
                 montoTotal: montoTotal,
                 datosContacto: datosContacto,
-                carrito: JSON.parse(localStorage.getItem('carrito')) || []
+                carrito: JSON.parse(localStorage.getItem('carrito')) || [],
+                numeroReferencia: numeroReferencia
             });
         } catch (error) {
             console.error('Error al procesar pago con el banco:', error);

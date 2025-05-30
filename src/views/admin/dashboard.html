@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Administrativo - Dashboard</title>
     <link rel="stylesheet" href="/styles/admin.css">
+    <!-- Chart.js para gráficos - Movido al head -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 </head>
 <body class="admin-page">
     <nav class="sidebar">
@@ -12,10 +14,10 @@
             <h2>Panel Admin</h2>
         </div>
         <ul class="menu">
-            <!-- <li class="active"><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li> -->
+            <li class="active"><a href="/admin/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
             <li><a href="/admin/productos"><i class="fas fa-box"></i> Productos</a></li>    
-
             <li><a href="/admin/categorias"><i class="fas fa-tags"></i> Categorías</a></li>
+            <li><a href="/admin/bitacora"><i class="fas fa-history"></i> Bitácora</a></li>
         </ul>
         <div class="sidebar-footer">
             <button onclick="cerrarSesion()" class="btn-logout">Cerrar sesión</button>
@@ -30,59 +32,42 @@
             </div>
         </header>
 
+        <!-- Resumen de Productos -->
         <div class="dashboard-grid">
             <div class="card">
-                <h3>Ventas del día</h3>
-                <p class="number" id="ventasDia">$0.00</p>
+                <h3>Total Productos</h3>
+                <p class="number" id="totalProductos">0</p>
             </div>
             <div class="card">
-                
-                
-            </div>
-            <div class="card">
-                <h3>Productos activos</h3>
+                <h3>Productos Activos</h3>
                 <p class="number" id="productosActivos">0</p>
             </div>
             <div class="card">
-                <h3>Total clientes</h3>
-                <p class="number" id="totalClientes">0</p>
+                <h3>Productos Agotados</h3>
+                <p class="number" id="productosAgotados">0</p>
+            </div>
+            <div class="card">
+                <h3>Stock Total</h3>
+                <p class="number" id="stockTotal">0</p>
             </div>
         </div>
 
+        <!-- Gráficos y Estadísticas -->
         <div class="dashboard-charts">
             <div class="chart-container">
-                <h3>Ventas últimos 7 días</h3>
-                <canvas id="ventasChart"></canvas>
+                <h3>Productos por Categoría</h3>
+                <canvas id="categoriasChart"></canvas>
             </div>
             <div class="chart-container">
-                <h3>Productos más vendidos</h3>
-                <canvas id="productosChart"></canvas>
+                <h3>Eventos de Bitácora</h3>
+                <canvas id="bitacoraChart"></canvas>
             </div>
-        </div>
-
-        <div class="recent-orders">
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Cliente</th>
-                        <th>Total</th>
-                        <th>Estado</th>
-                        <th>Fecha</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Se llena dinámicamente -->
-                </tbody>
-            </table>
         </div>
     </main>
 
         <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Chart.js para gráficos -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <!-- Scripts propios -->
     <script src="/js/admin/auth.js"></script>
     <script src="/js/admin/dashboard.js"></script>

@@ -1,95 +1,30 @@
 const jwt = require('jsonwebtoken');
-const mysql = require('mysql2/promise');
+const db = require('../database');
+const { JWT_CONFIG } = require('../config');
 
-// Configuración de la conexión a la base de datos
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'chatapp',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
-
-// Verificar la conexión
-pool.getConnection((err, connection) => {
-    if (err) {
-        console.error('Error al conectar a la base de datos:', err);
-        return;
-    }
-    console.log('Conexión a la base de datos establecida');
-    connection.release();
-});
-
-// Clave secreta para JWT
-const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_aqui';
-
-// Controlador de login
-async function login(req, res) {
+// Controlador de autenticación admin
+exports.login = async (req, res) => {
+    try {
     const { email, password } = req.body;
 
-    try {
-        console.log('Intento de login:', { email }); // Log para debugging
-
-        // Validar campos requeridos
-        if (!email || !password) {
-            console.log('Campos faltantes');
-            return res.status(400).json({
-                error: true,
-                mensaje: 'Email y contraseña son requeridos'
-            });
-        }
-
-        // Buscar usuario en la base de datos
-        let connection;
-        try {
-            connection = await pool.getConnection();
-            console.log('Ejecutando query con email:', email);
-            
-            const [usuarios] = await connection.query(
+        // Verificar credenciales - obtener usuario por email
+        const [usuarios] = await db.pool.query(
                 'SELECT * FROM usuarios_admin WHERE email = ? AND estado = 1',
                 [email]
             );
 
-            console.log('Query ejecutado');
-            console.log('Usuarios encontrados:', usuarios.length);
-            if (usuarios.length > 0) {
-                console.log('Datos del usuario encontrado:', {
-                    id: usuarios[0].id_usuario,
-                    email: usuarios[0].email,
-                    nombre: usuarios[0].nombre,
-                    rol: usuarios[0].rol,
-                    estado: usuarios[0].estado,
-                    passwordHash: usuarios[0].password.substring(0, 10) + '...' // Solo mostramos parte del hash por seguridad
-                });
-            } else {
-                console.log('No se encontró ningún usuario con ese email');
-            }
-
             if (usuarios.length === 0) {
-                console.log('Usuario no encontrado o inactivo');
                 return res.status(401).json({
-                    error: true,
-                    mensaje: 'Credenciales inválidas o usuario inactivo'
+                error: 'Credenciales inválidas'
                 });
             }
 
             const usuario = usuarios[0];
 
-            // Verificar contraseña
-            console.log('=== Verificación de contraseña ===');
-            console.log('Password proporcionada:', password);
-            console.log('Password en DB:', usuario.password);
-            
-            const passwordValida = password === usuario.password;
-            console.log('Contraseñas coinciden:', passwordValida);
-
-            if (!passwordValida) {
-                console.log('Password incorrecta');
+        // Verificar contraseña directamente
+        if (password !== usuario.password) {
                 return res.status(401).json({
-                    error: true,
-                    mensaje: 'Credenciales inválidas'
+                error: 'Credenciales inválidas'
                 });
             }
 
@@ -100,83 +35,75 @@ async function login(req, res) {
                     email: usuario.email,
                     rol: usuario.rol
                 },
-                JWT_SECRET,
-                { expiresIn: '24h' }
+            JWT_CONFIG.secret,
+            { expiresIn: JWT_CONFIG.expiresIn }
             );
 
-            console.log('Token generado correctamente'); // Log para debugging
-
             // Actualizar último acceso
-            await connection.query(
+        await db.pool.query(
                 'UPDATE usuarios_admin SET ultimo_acceso = NOW() WHERE id_usuario = ?',
                 [usuario.id_usuario]
             );
 
-            console.log('Login exitoso para:', usuario.email); // Log para debugging
+        // Establecer cookie con el token
+        res.cookie('adminToken', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000 // 24 horas
+        });
 
             res.json({
-                error: false,
                 token,
+            usuario: {
+                id: usuario.id_usuario,
                 nombre: usuario.nombre,
                 email: usuario.email,
                 rol: usuario.rol
-            });
-
-        } catch (error) {
-            console.error('Error en la base de datos:', error);
-            res.status(500).json({
-                error: true,
-                mensaje: 'Error en el servidor: ' + error.message
-            });
-        } finally {
-            if (connection) connection.release();
-        }
+            }
+        });
 
     } catch (error) {
-        console.error('Error en login:', error);
         res.status(500).json({
-            error: true,
-            mensaje: 'Error en el servidor: ' + error.message
+            error: 'Error al procesar el login'
         });
     }
-}
+};
 
-// Middleware para verificar token JWT
-function verificarToken(req, res, next) {
-    const token = req.headers.authorization?.split(' ')[1];
+// Middleware para verificar token
+exports.verificarToken = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        return res.status(401).json({
+            error: 'Token no proporcionado'
+        });
+    }
+
+    const token = authHeader.split(' ')[1];
 
     if (!token) {
         return res.status(401).json({
-            error: true,
-            mensaje: 'Token no proporcionado'
+            error: 'Token no proporcionado'
         });
     }
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
+        const decoded = jwt.verify(token, JWT_CONFIG.secret);
         req.usuario = decoded;
         next();
     } catch (error) {
         return res.status(401).json({
-            error: true,
-            mensaje: 'Token inválido'
+            error: 'Token inválido'
         });
     }
-}
+};
 
-// Middleware para verificar rol de administrador
-function verificarAdmin(req, res, next) {
-    if (req.usuario.rol !== 'admin') {
+// Middleware para verificar rol de admin
+exports.verificarAdmin = (req, res, next) => {
+    if (!req.usuario || req.usuario.rol !== 'admin') {
         return res.status(403).json({
-            error: true,
-            mensaje: 'Acceso denegado: se requiere rol de administrador'
+            error: 'Acceso denegado - Se requiere rol de administrador'
         });
     }
     next();
-}
-
-module.exports = {
-    login,
-    verificarToken,
-    verificarAdmin
 };

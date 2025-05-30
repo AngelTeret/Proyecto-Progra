@@ -34,7 +34,6 @@ CREATE TABLE producto_categoria (
     FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria)
 );
 
-
 -- Tabla de usuarios administrativos
 CREATE TABLE usuarios_admin (
     id_usuario INT PRIMARY KEY AUTO_INCREMENT,
@@ -45,7 +44,6 @@ CREATE TABLE usuarios_admin (
     estado BOOLEAN DEFAULT TRUE,
     ultimo_acceso TIMESTAMP
 );
-
 
 -- Tabla para transacciones bancarias detalladas
 CREATE TABLE transacciones_bancarias (
@@ -73,6 +71,62 @@ CREATE TABLE transacciones_bancarias (
 );
 
 
+-- Tabla de facturas
+CREATE TABLE facturas (
+    id_factura INT PRIMARY KEY AUTO_INCREMENT,
+    id_transaccion INT,
+    numero_factura VARCHAR(20) UNIQUE,
+    nombre_cliente VARCHAR(100),
+    email_cliente VARCHAR(100),
+    telefono_cliente VARCHAR(20),
+    direccion_cliente TEXT,
+    fecha_emision TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total DECIMAL(10,2),
+    detalles TEXT, 
+    ruta_pdf VARCHAR(255), 
+    FOREIGN KEY (id_transaccion) REFERENCES transacciones_bancarias(id_transaccion)
+);
+
+
+DELIMITER //
+DROP TRIGGER IF EXISTS bitacora_factura_generada;
+CREATE TRIGGER bitacora_factura_generada
+AFTER INSERT ON facturas
+FOR EACH ROW
+BEGIN
+    INSERT INTO bitacora_transacciones (
+        tipo_evento,
+        estado,
+        descripcion,
+        id_factura,
+        numero_factura,
+        nombre_cliente,
+        email_cliente,
+        monto,
+        ruta_pdf,
+        id_transaccion,
+        datos_adicionales
+    ) VALUES (
+        'FACTURA_GENERADA',
+        'EXITOSO',
+        CONCAT('Factura generada exitosamente: ', NEW.numero_factura, ' | Cliente: ', NEW.nombre_cliente, ' | Total: Q. ', FORMAT(NEW.total, 2)),
+        NEW.id_factura,
+        NEW.numero_factura,
+        NEW.nombre_cliente,
+        NEW.email_cliente,
+        NEW.total,
+        NEW.ruta_pdf,
+        NEW.id_transaccion,
+        JSON_OBJECT(
+            'telefono_cliente', NEW.telefono_cliente,
+            'direccion_cliente', NEW.direccion_cliente,
+            'detalles_compra', NEW.detalles
+        )
+    );
+END//
+DELIMITER ;
+
+-- Usuario administrador por defecto
 INSERT INTO usuarios_admin (nombre, email, password, rol, estado) 
 VALUES (
     'Administrador',
@@ -81,4 +135,10 @@ VALUES (
     'admin',
     1
 );
+
+
+
+
+
+
 

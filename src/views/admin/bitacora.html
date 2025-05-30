@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitácora - Panel Administrativo</title>
+    <!-- Scripts necesarios -->
+    <script src="/js/admin/auth.js"></script>
+    <link rel="stylesheet" href="/styles/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        .bitacora-container {
+            padding: 20px;
+        }
+
+        .filtros-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .filtro-grupo {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filtro-label {
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .filtro-input,
+        .filtro-select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .btn-filtrar {
+            background: #7f2549;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+
+        .registros-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .registro-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto auto;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .registro-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .registro-icono {
+            font-size: 1.5em;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+        }
+
+        .registro-info {
+            overflow: hidden;
+        }
+
+        .registro-descripcion {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .registro-meta {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .registro-fecha {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .registro-nivel {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        /* Estilos para diferentes tipos de eventos */
+        .trama_enviada { background-color: #fd7e14; }
+        .trama_recibida { background-color: #20c997; }
+        .trama_error { background-color: #dc3545; }
+        .pago_iniciado { background-color: #6f42c1; }
+        .pago_aprobado { background-color: #28a745; }
+        .pago_rechazado { background-color: #dc3545; }
+        .pago_error { background-color: #dc3545; }
+        .factura_generada { background-color: #007bff; }
+        .factura_enviada { background-color: #17a2b8; }
+        .factura_error { background-color: #dc3545; }
+
+        /* Estilos para estados */
+        .estado-EXITOSO { 
+            background-color: #28a745; 
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .estado-FALLIDO { 
+            background-color: #dc3545; 
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .estado-PENDIENTE { 
+            background-color: #ffc107; 
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        .estado-ERROR { 
+            background-color: #6c757d; 
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .registro-tecnica {
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 3px;
+        }
+
+        .sin-registros {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .paginacion {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-pagina {
+            padding: 5px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .btn-pagina.activa {
+            background: #7f2549;
+            color: white;
+            border-color: #7f2549;
+        }
+    </style>
+</head>
+<body class="admin-page">
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Panel Admin</h2>
+        </div>
+        <ul class="menu">
+            <li><a href="/admin/dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="/admin/productos"><i class="fas fa-box"></i> Productos</a></li>
+            <li><a href="/admin/categorias"><i class="fas fa-tags"></i> Categorías</a></li>
+            <li class="active"><a href="/admin/bitacora"><i class="fas fa-history"></i> Bitácora</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button onclick="cerrarSesion()" class="btn-logout">Cerrar sesión</button>
+        </div>
+    </nav>
+
+    <main class="content">
+        <header class="content-header">
+            <h1>Bitácora del Sistema</h1>
+            <div class="user-info">
+                <span id="nombreAdmin">Administrador</span>
+            </div>
+        </header>
+
+        <div class="bitacora-container">
+            <div class="filtros-container">
+                <div class="filtros-grid">
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Tipo de Evento</label>
+                        <select id="filtroTipoEvento" class="filtro-select">
+                            <option value="">Todos</option>
+                            <option value="TRAMA_ENVIADA">Trama Enviada</option>
+                            <option value="TRAMA_RECIBIDA">Trama Recibida</option>
+                            <option value="TRAMA_ERROR">Error de Trama</option>
+                            <option value="PAGO_INICIADO">Pago Iniciado</option>
+                            <option value="PAGO_APROBADO">Pago Aprobado</option>
+                            <option value="PAGO_RECHAZADO">Pago Rechazado</option>
+                            <option value="PAGO_ERROR">Error de Pago</option>
+                            <option value="FACTURA_GENERADA">Factura Generada</option>
+                            <option value="FACTURA_ENVIADA">Factura Enviada</option>
+                            <option value="FACTURA_ERROR">Error de Factura</option>
+                        </select>
+                    </div>
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Estado</label>
+                        <select id="filtroEstado" class="filtro-select">
+                            <option value="">Todos</option>
+                            <option value="EXITOSO">Exitoso</option>
+                            <option value="FALLIDO">Fallido</option>
+                            <option value="PENDIENTE">Pendiente</option>
+                            <option value="ERROR">Error</option>
+                        </select>
+                    </div>
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Nivel de Importancia</label>
+                        <select id="filtroNivel" class="filtro-select">
+                            <option value="">Todos</option>
+                            <option value="BAJO">Bajo</option>
+                            <option value="MEDIO">Medio</option>
+                            <option value="ALTO">Alto</option>
+                            <option value="CRITICO">Crítico</option>
+                        </select>
+                    </div>
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Fecha Inicio</label>
+                        <input type="date" id="filtroFechaInicio" class="filtro-input">
+                    </div>
+                    <div class="filtro-grupo">
+                        <label class="filtro-label">Fecha Fin</label>
+                        <input type="date" id="filtroFechaFin" class="filtro-input">
+                    </div>
+                    <div class="filtro-grupo">
+                        <button id="btnFiltrar" class="btn-filtrar">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="registrosContainer" class="registros-container">
+                <!-- Los registros se cargarán aquí dinámicamente -->
+            </div>
+
+            <div id="paginacion" class="paginacion">
+                <!-- La paginación se generará dinámicamente -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Verificar autenticación al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verificar autenticación
+            if (!verificarAutenticacion()) {
+                return;
+            }
+
+            // Mostrar nombre del administrador
+            const nombreAdmin = localStorage.getItem('adminNombre');
+            if (nombreAdmin) {
+                document.getElementById('nombreAdmin').textContent = nombreAdmin;
+            }
+
+            // Configurar evento de filtrado
+            document.getElementById('btnFiltrar').addEventListener('click', () => {
+                paginaActual = 1;
+                cargarRegistros();
+            });
+
+            // Cargar registros iniciales
+            cargarRegistros();
+        });
+
+        // Función de verificación de autenticación mejorada
+        function verificarAutenticacion() {
+            const token = localStorage.getItem('adminToken');
+            
+            if (!token) {
+                alert('Sesión expirada. Redirigiendo al login...');
+                window.location.href = '/admin/login';
+                return false;
+            }
+            
+            return true;
+        }
+
+        let paginaActual = 1;
+        const registrosPorPagina = 20;
+
+        async function cargarRegistros() {
+            try {
+                const tipoEvento = document.getElementById('filtroTipoEvento').value;
+                const estado = document.getElementById('filtroEstado').value;
+                const fechaInicio = document.getElementById('filtroFechaInicio').value;
+                const fechaFin = document.getElementById('filtroFechaFin').value;
+
+                const token = localStorage.getItem('adminToken');
+
+                const queryParams = new URLSearchParams({
+                    pagina: paginaActual,
+                    limite: registrosPorPagina,
+                    tipo_evento: tipoEvento,
+                    estado: estado,
+                    fecha_inicio: fechaInicio,
+                    fecha_fin: fechaFin
+                });
+                
+                const response = await fetch(`/api/bitacora?${queryParams}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('adminToken');
+                    localStorage.removeItem('adminNombre');
+                    alert('Sesión expirada. Redirigiendo al login...');
+                    window.location.href = '/admin/login';
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                actualizarInterfaz(data);
+            } catch (error) {
+                mostrarError('Error al cargar los registros: ' + error.message);
+            }
+        }
+
+        function actualizarInterfaz(data) {
+            const container = document.getElementById('registrosContainer');
+            
+            if (!data.registros || data.registros.length === 0) {
+                container.innerHTML = `
+                    <div class="sin-registros">
+                        <i class="fas fa-inbox" style="font-size: 3rem; color: #ddd; margin-bottom: 20px;"></i>
+                        <p>No se encontraron registros en la bitácora</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const registrosHTML = data.registros.map(registro => {
+                // Construir información adicional
+                let infoAdicional = [];
+                
+                if (registro.numero_referencia) {
+                    infoAdicional.push(`Ref: ${registro.numero_referencia}`);
+                }
+                
+                // Manejar el monto
+                if (registro.monto !== undefined && registro.monto !== null) {
+                    const monto = parseFloat(registro.monto);
+                    if (!isNaN(monto)) {
+                        infoAdicional.push(`Monto: Q. ${monto.toFixed(2)}`);
+                    }
+                } else if (registro.datos_adicionales?.monto_formateado) {
+                    infoAdicional.push(`Monto: ${registro.datos_adicionales.monto_formateado}`);
+                }
+                
+                if (registro.codigo_respuesta_banco) {
+                    infoAdicional.push(`Código: ${registro.codigo_respuesta_banco}`);
+                }
+                
+                if (registro.nombre_cliente) {
+                    infoAdicional.push(`Cliente: ${registro.nombre_cliente}`);
+                }
+                
+                if (registro.numero_factura) {
+                    infoAdicional.push(`Factura: ${registro.numero_factura}`);
+                }
+
+                // Construir información técnica
+                let infoTecnica = [];
+                
+                if (registro.trama_enviada) {
+                    infoTecnica.push(`Trama: ${registro.trama_enviada.substring(0, 20)}...`);
+                }
+                
+                if (registro.ip_origen) {
+                    infoTecnica.push(`IP: ${registro.ip_origen}`);
+                }
+                
+                if (registro.admin_nombre) {
+                    infoTecnica.push(`Admin: ${registro.admin_nombre}`);
+                }
+
+                return `
+                    <div class="registro-item" onclick="expandirRegistro(${registro.id_registro})">
+                        <div class="registro-icono ${registro.tipo_evento.toLowerCase()}">
+                            ${obtenerIconoEvento(registro.tipo_evento)}
+                        </div>
+                        <div class="registro-info">
+                            <div class="registro-descripcion">${registro.descripcion}</div>
+                            <div class="registro-meta">
+                                ${infoAdicional.join(' • ')}
+                            </div>
+                            ${infoTecnica.length > 0 ? `<div class="registro-tecnica">${infoTecnica.join(' • ')}</div>` : ''}
+                        </div>
+                        <div class="registro-fecha">
+                            ${formatearFecha(registro.fecha_hora)}
+                        </div>
+                        <div class="registro-estado estado-${registro.estado}">
+                            ${registro.estado}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = registrosHTML;
+            actualizarPaginacion(data.total);
+        }
+
+        function obtenerIconoEvento(tipo) {
+            const iconos = {
+                'TRAMA_ENVIADA': '<i class="fas fa-paper-plane"></i>',
+                'TRAMA_RECIBIDA': '<i class="fas fa-inbox"></i>',
+                'TRAMA_ERROR': '<i class="fas fa-exclamation-triangle"></i>',
+                'PAGO_INICIADO': '<i class="fas fa-play-circle"></i>',
+                'PAGO_APROBADO': '<i class="fas fa-check-circle"></i>',
+                'PAGO_RECHAZADO': '<i class="fas fa-times-circle"></i>',
+                'PAGO_ERROR': '<i class="fas fa-exclamation-circle"></i>',
+                'FACTURA_GENERADA': '<i class="fas fa-file-invoice"></i>',
+                'FACTURA_ENVIADA': '<i class="fas fa-envelope"></i>',
+                'FACTURA_ERROR': '<i class="fas fa-file-times"></i>'
+            };
+            return iconos[tipo] || '<i class="fas fa-info-circle"></i>';
+        }
+
+        function formatearFecha(fecha) {
+            return new Date(fecha).toLocaleString('es-ES', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function actualizarPaginacion(total) {
+            const totalPaginas = Math.ceil(total / registrosPorPagina);
+            const paginacionContainer = document.getElementById('paginacion');
+            
+            let html = '';
+            
+            // Botón anterior
+            if (paginaActual > 1) {
+                html += `<button class="btn-pagina" onclick="cambiarPagina(${paginaActual - 1})">
+                    <i class="fas fa-chevron-left"></i>
+                </button>`;
+            }
+            
+            // Páginas
+            for (let i = 1; i <= totalPaginas; i++) {
+                if (i === paginaActual) {
+                    html += `<button class="btn-pagina activa">${i}</button>`;
+                } else {
+                    html += `<button class="btn-pagina" onclick="cambiarPagina(${i})">${i}</button>`;
+                }
+            }
+            
+            // Botón siguiente
+            if (paginaActual < totalPaginas) {
+                html += `<button class="btn-pagina" onclick="cambiarPagina(${paginaActual + 1})">
+                    <i class="fas fa-chevron-right"></i>
+                </button>`;
+            }
+            
+            paginacionContainer.innerHTML = html;
+        }
+
+        function cambiarPagina(pagina) {
+            paginaActual = pagina;
+            cargarRegistros();
+        }
+
+        function mostrarError(mensaje) {
+            alert(mensaje);
+        }
+
+        // Función para expandir registro y mostrar detalles
+        async function expandirRegistro(idRegistro) {
+            try {
+                const token = localStorage.getItem('adminToken');
+                const response = await fetch(`/api/bitacora/${idRegistro}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const registro = await response.json();
+                    mostrarDetallesRegistro(registro);
+                }
+            } catch (error) {
+                mostrarError('Error al expandir registro: ' + error.message);
+            }
+        }
+
+        // Función para mostrar modal con detalles completos
+        function mostrarDetallesRegistro(registro) {
+            let detallesHTML = `
+                <div style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                    <h3 style="margin-top: 0; color: #7f2549;">Detalles del Registro</h3>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <strong>Tipo:</strong> ${registro.tipo_evento}<br>
+                        <strong>Estado:</strong> <span class="estado-${registro.estado}">${registro.estado}</span><br>
+                        <strong>Fecha:</strong> ${formatearFecha(registro.fecha_hora)}
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <strong>Descripción:</strong><br>
+                        <div style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 5px;">
+                            ${registro.descripcion}
+                        </div>
+                    </div>
+            `;
+
+            // Información de transacción
+            if (registro.numero_referencia || registro.monto || registro.codigo_cliente) {
+                detallesHTML += `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Información de Transacción:</strong><br>
+                        ${registro.numero_referencia ? `<strong>Referencia:</strong> ${registro.numero_referencia}<br>` : ''}
+                        ${registro.monto !== undefined && registro.monto !== null ? 
+                            `<strong>Monto:</strong> Q. ${parseFloat(registro.monto).toFixed(2)}<br>` : 
+                            registro.datos_adicionales?.monto_formateado ? 
+                            `<strong>Monto:</strong> ${registro.datos_adicionales.monto_formateado}<br>` : ''
+                        }
+                        ${registro.codigo_cliente ? `<strong>Código Cliente:</strong> ${registro.codigo_cliente}<br>` : ''}
+                        ${registro.codigo_respuesta_banco ? `<strong>Código Banco:</strong> ${registro.codigo_respuesta_banco}<br>` : ''}
+                    </div>
+                `;
+            }
+
+            // Información de cliente
+            if (registro.nombre_cliente || registro.email_cliente) {
+                detallesHTML += `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Información de Cliente:</strong><br>
+                        ${registro.nombre_cliente ? `<strong>Nombre:</strong> ${registro.nombre_cliente}<br>` : ''}
+                        ${registro.email_cliente ? `<strong>Email:</strong> ${registro.email_cliente}<br>` : ''}
+                    </div>
+                `;
+            }
+
+            // Información de factura
+            if (registro.numero_factura || registro.ruta_pdf) {
+                detallesHTML += `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Información de Factura:</strong><br>
+                        ${registro.numero_factura ? `<strong>Número:</strong> ${registro.numero_factura}<br>` : ''}
+                        ${registro.ruta_pdf ? `<strong>PDF:</strong> ${registro.ruta_pdf}<br>` : ''}
+                    </div>
+                `;
+            }
+
+            // Tramas bancarias
+            if (registro.trama_enviada || registro.trama_recibida) {
+                detallesHTML += `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Tramas Bancarias:</strong><br>
+                        ${registro.trama_enviada ? `<strong>Enviada:</strong><br><code style="background: #f8f9fa; padding: 5px; display: block; margin: 5px 0; word-break: break-all;">${registro.trama_enviada}</code>` : ''}
+                        ${registro.trama_recibida ? `<strong>Recibida:</strong><br><code style="background: #f8f9fa; padding: 5px; display: block; margin: 5px 0; word-break: break-all;">${registro.trama_recibida}</code>` : ''}
+                    </div>
+                `;
+            }
+
+            // Datos adicionales
+            if (registro.datos_adicionales && Object.keys(registro.datos_adicionales).length > 0) {
+                detallesHTML += `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Datos Adicionales:</strong><br>
+                        <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-top: 5px; white-space: pre-wrap; font-size: 0.9em;">${JSON.stringify(registro.datos_adicionales, null, 2)}</pre>
+                    </div>
+                `;
+            }
+
+            // Información técnica
+            if (registro.ip_origen || registro.admin_nombre || registro.tiempo_respuesta_ms) {
+                detallesHTML += `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Información Técnica:</strong><br>
+                        ${registro.ip_origen ? `<strong>IP Origen:</strong> ${registro.ip_origen}<br>` : ''}
+                        ${registro.admin_nombre ? `<strong>Admin:</strong> ${registro.admin_nombre}<br>` : ''}
+                        ${registro.tiempo_respuesta_ms ? `<strong>Tiempo Respuesta:</strong> ${registro.tiempo_respuesta_ms}ms<br>` : ''}
+                        ${registro.servidor_banco ? `<strong>Servidor:</strong> ${registro.servidor_banco}<br>` : ''}
+                    </div>
+                `;
+            }
+
+            // Errores
+            if (registro.detalles_error) {
+                detallesHTML += `
+                    <div style="margin-bottom: 15px;">
+                        <strong>Detalles del Error:</strong><br>
+                        <div style="background: #fff5f5; border-left: 4px solid #fc8181; padding: 10px; margin-top: 5px;">
+                            ${registro.detalles_error}
+                        </div>
+                    </div>
+                `;
+            }
+
+            detallesHTML += `
+                    <div style="text-align: right; margin-top: 20px;">
+                        <button onclick="cerrarModal()" style="background: #7f2549; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Cerrar</button>
+                    </div>
+                </div>
+            `;
+
+            // Crear y mostrar modal
+            const modal = document.createElement('div');
+            modal.id = 'modalDetalles';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1000;
+            `;
+            modal.innerHTML = detallesHTML;
+            document.body.appendChild(modal);
+
+            // Cerrar modal al hacer clic fuera
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    cerrarModal();
+                }
+            });
+        }
+
+        function cerrarModal() {
+            const modal = document.getElementById('modalDetalles');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function formatearMonto(monto) {
+            if (monto === undefined || monto === null) return '';
+            const montoStr = monto.toString();
+            
+            if (montoStr.startsWith('Q.')) {
+                return montoStr;
+            } else if (montoStr.startsWith('$')) {
+                return `Q.${montoStr.substring(1)}`;
+            } else {
+                const montoNum = parseFloat(montoStr);
+                return !isNaN(montoNum) ? `Q. ${montoNum.toFixed(2)}` : montoStr;
+            }
+        }
+    </script>
+</body>
+</html> 

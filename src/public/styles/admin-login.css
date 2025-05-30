@@ -1,0 +1,169 @@
+body {
+    margin: 0;
+    font-family: 'Inter', 'Segoe UI', 'Roboto', Arial, sans-serif;
+    background: #fff;
+    color: #333;
+}
+
+.login-split-screen {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.login-left-panel {
+    flex: 0.45; /* Menos espacio para el logo, más para el form */
+    background: linear-gradient(135deg, #fde7f0 0%, #fadbde 100%); /* Tonos rosados más claros y elegantes */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.company-logo-large {
+    max-width: 55%;
+    max-height: 180px;
+    height: auto;
+    object-fit: contain;
+}
+
+.login-right-panel {
+    flex: 0.55; /* Más espacio para el formulario */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    padding: 40px 20px;
+}
+
+.login-form-container {
+    width: 100%;
+    max-width: 400px; /* Un poco más ancho */
+}
+
+.login-welcome-title {
+    font-size: 2.3rem;
+    font-weight: 700;
+    color: #7f2549;
+    margin-bottom: 35px;
+    text-align: center;
+}
+
+.form-group {
+    width: 100%;
+    margin-bottom: 24px;
+    position: relative; /* Para el icono de contraseña */
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #444; /* Ligeramente más oscuro para mejor contraste */
+    font-weight: 500;
+    font-size: 0.98rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 15px 18px;
+    border: 1.5px solid #e8dde2;
+    border-radius: 10px; /* Más redondeado */
+    font-size: 1.05rem;
+    background: #fdfcfa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    color: #333;
+    box-sizing: border-box; /* Asegura que padding no afecte el ancho total */
+}
+.form-input::placeholder {
+    color: #bbb;
+}
+.form-input:focus {
+    border-color: #7f2549;
+    background: #fff;
+    box-shadow: 0 0 0 3.5px rgba(127, 37, 73, 0.12);
+}
+
+.password-group {
+    position: relative;
+}
+
+.password-toggle-icon {
+    position: absolute;
+    top: 70%; /* Ajustar para centrar con el input */
+    right: 18px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #7f2549;
+    font-size: 1.1rem;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 16px;
+    background: #7f2549;
+    color: #fff;
+    border: none;
+    border-radius: 10px; /* Consistente con inputs */
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background-color 0.2s, transform 0.1s;
+    letter-spacing: 0.03em;
+    box-sizing: border-box;
+}
+.btn-login:hover, .btn-login:focus {
+    background-color: #6a1f3d;
+    transform: translateY(-2px);
+}
+
+.error-message {
+    color: #d93025;
+    margin-top: 18px;
+    text-align: center;
+    display: none;
+    font-size: 0.98rem;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 850px) { /* Ajuste del breakpoint para el cambio a columna */
+    .login-left-panel {
+        flex: 0.4;
+    }
+    .login-right-panel {
+        flex: 0.6;
+    }
+}
+
+@media (max-width: 768px) {
+    .login-split-screen {
+        flex-direction: column;
+    }
+    .login-left-panel {
+        flex: 0 0 auto;
+        padding: 40px 20px;
+        min-height: 250px; /* Altura mínima para el logo en móvil */
+    }
+    .company-logo-large {
+        max-width: 35%;
+        max-height: 100px;
+    }
+    .login-right-panel {
+        flex: 1;
+        padding: 30px 20px;
+        justify-content: flex-start; /* Alinear al inicio en móvil */
+        padding-top: 40px;
+    }
+    .login-welcome-title {
+        font-size: 2rem;
+        margin-bottom: 30px;
+    }
+    .form-input {
+        padding: 14px 16px;
+    }
+     .password-toggle-icon {
+        top: 68%;
+    }
+} 

@@ -19,15 +19,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function cargarProductos() {
     try {
         const headers = obtenerHeadersAuth();
-        console.log('Headers:', headers);
         
         const response = await fetch('/api/admin/productos', {
             headers: headers
         });
-        console.log('Response status:', response.status);
         
         const data = await response.json();
-        console.log('Response data:', data);
         
         if (response.ok) {
             productos = data.productos;
@@ -38,7 +35,6 @@ async function cargarProductos() {
             mostrarError(data.mensaje || 'Error al cargar los productos');
         }
     } catch (error) {
-        console.error('Error completo:', error);
         mostrarError('Error al cargar los productos: ' + error.message);
     }
 }
@@ -56,7 +52,6 @@ async function cargarCategorias() {
             actualizarSelectCategorias();
         }
     } catch (error) {
-        console.error('Error al cargar las categorías:', error);
         mostrarError('Error al cargar las categorías');
     }
 }
@@ -93,22 +88,10 @@ function mostrarModalProducto(producto = null) {
     const titulo = document.getElementById('modalTitulo');
     const form = document.getElementById('formProducto');
     
-    console.log('Mostrando modal de producto con datos:', producto);
-    
     titulo.textContent = producto ? 'Editar Producto' : 'Nuevo Producto';
     form.reset();
     
     if (producto) {
-        // Mostrar cada campo del producto en la consola para debugging
-        console.log('ID:', producto.id_producto);
-        console.log('Nombre:', producto.nombre);
-        console.log('Descripción:', producto.descripcion);
-        console.log('Precio:', producto.precio);
-        console.log('Stock:', producto.stock);
-        console.log('Estado:', producto.estado);
-        console.log('Imagen:', producto.imagen);
-        console.log('Categoría ID:', producto.id_categoria, typeof producto.id_categoria);
-        
         // Rellenar formulario con validación para cada campo
         const idProductoField = document.getElementById('idProducto');
         const nombreField = document.getElementById('nombre');
@@ -134,14 +117,12 @@ function mostrarModalProducto(producto = null) {
             } else {
                 // Si no es válido, usar un valor predeterminado (primera opción)
                 estadoField.selectedIndex = 0;
-                console.warn('Estado no válido:', producto.estado);
             }
         }
         
         // Mostrar imagen actual
         if (preview) {
             preview.src = producto.imagen || '/img/placeholder.png';
-            console.log('Vista previa de imagen configurada:', preview.src);
         }
         
         // Seleccionar categoría con validación
@@ -155,15 +136,12 @@ function mostrarModalProducto(producto = null) {
                 
                 if (categoriaExiste) {
                     selectCategorias.value = producto.id_categoria;
-                    console.log('Categoría seleccionada:', producto.id_categoria);
                 } else {
                     selectCategorias.selectedIndex = 0;
-                    console.warn('Categoría no encontrada en el dropdown:', producto.id_categoria);
                 }
             } else {
                 // Si no hay categoría, seleccionar la opción por defecto
                 selectCategorias.selectedIndex = 0;
-                console.log('Sin categoría, usando opción por defecto');
             }
         }
     }
@@ -347,25 +325,20 @@ async function guardarProducto(event) {
 // Editar producto
 async function editarProducto(id) {
     try {
-        console.log('Cargando producto con ID:', id);
         const response = await fetch(`/api/admin/productos/${id}`, {
             headers: obtenerHeadersAuth()
         });
         const data = await response.json();
         
-        console.log('Datos recibidos del API:', data);
-        
         if (response.ok) {
             // Detectar la estructura de la respuesta y adaptar
             // El API puede devolver {producto: {...}} o directamente el objeto producto
             const producto = data.producto || data;
-            console.log('Producto a mostrar en el modal:', producto);
             mostrarModalProducto(producto);
         } else {
             mostrarError(data.mensaje || 'Error al cargar el producto');
         }
     } catch (error) {
-        console.error('Error completo:', error);
         mostrarError('Error al cargar el producto: ' + error.message);
     }
 }
@@ -417,7 +390,6 @@ async function eliminarProducto(id) {
             mostrarError(data.mensaje || `Error al eliminar el producto "${producto.nombre}"`);
         }
     } catch (error) {
-        console.error('Error al eliminar producto:', error);
         mostrarError('Error al intentar eliminar el producto');
     }
 }
@@ -427,8 +399,6 @@ function filtrarProductos() {
     const busqueda = document.getElementById('buscarProducto').value.toLowerCase();
     const categoria = document.getElementById('filtroCategoria').value;
     const estado = document.getElementById('filtroEstado').value;
-    
-    console.log('Filtro - Búsqueda:', busqueda, 'Categoría:', categoria, 'Estado:', estado);
     
     const productosFiltrados = productosData.filter(producto => {
         // Verificar coincidencia de búsqueda en el nombre
@@ -446,7 +416,6 @@ function filtrarProductos() {
         return coincideBusqueda && coincideCategoria && coincideEstado;
     });
     
-    console.log('Productos filtrados:', productosFiltrados);
     renderizarTablaProductosFiltrados(productosFiltrados);
 }
 

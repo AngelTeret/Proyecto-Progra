@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factura - Rare Beauty</title>
+    <link rel="stylesheet" href="/styles/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .factura-container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 1.8fr 1.2fr;
+            gap: 2rem;
+        }
+
+        .factura-main {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .factura-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .factura-title {
+            color: #333;
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .factura-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .factura-iframe-container {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        #pdfViewer {
+            border-radius: 4px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .factura-button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .factura-button-primary {
+            background: #e91e63;
+            color: white;
+        }
+
+        .factura-button-primary:hover {
+            background: #d81557;
+            transform: translateY(-2px);
+        }
+
+        .factura-button-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .factura-button-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .factura-resumen {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            height: fit-content;
+            min-width: 400px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .factura-resumen-title {
+            color: #333;
+            font-size: 1.75rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            text-align: center;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .factura-details {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .factura-detail-item {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            min-width: 0;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
+
+        .factura-detail-item:first-child {
+            margin-top: 0;
+        }
+
+        .factura-detail-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .factura-detail-item span {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: 500;
+            width: 100%;
+        }
+
+        .factura-detail-item strong {
+            font-size: 1rem;
+            color: #212529;
+            font-weight: 500;
+            word-break: break-all;
+            overflow-wrap: break-word;
+            white-space: normal;
+            width: 100%;
+            display: block;
+            min-width: 0;
+        }
+
+        .factura-total {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #e91e63;
+            color: white;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .factura-total span {
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .factura-total strong {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1200px) {
+            .factura-container {
+                grid-template-columns: 1fr;
+            }
+
+            .factura-resumen {
+                min-width: unset;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="barraSuperior">
+        <nav class="barraNavegacion">
+            <ul>
+                <li><a href="/" class="enlaceNav">INICIO</a></li>
+            </ul>
+            <div class="logo">Rare Beauty</div>
+            <ul>
+                <li><a href="/productos" class="enlaceNav">PRODUCTOS</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="factura-container">
+        <div class="factura-main">
+            <div class="factura-header">
+                <h1 class="factura-title">Tu Factura</h1>
+                <div class="factura-actions">
+                    <a id="downloadPdf" class="factura-button factura-button-primary" download>
+                        <i class="fas fa-download"></i>
+                        Descargar PDF
+                    </a>
+                    <a href="/" class="factura-button factura-button-secondary">
+                        <i class="fas fa-home"></i>
+                        Regresar
+                    </a>
+                </div>
+            </div>
+            <div class="factura-iframe-container">
+                <iframe id="pdfViewer" width="100%" height="600px" style="border: none;"></iframe>
+            </div>
+        </div>
+
+        <div class="factura-resumen">
+            <h2 class="factura-resumen-title">Resumen de la Factura</h2>
+            <div id="facturaDetails" class="factura-details">
+                <!-- Los detalles se cargarán dinámicamente aquí -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Obtener el ID de la factura de la URL
+        const idFactura = window.location.pathname.split('/').pop();
+        
+        // Función para cargar los datos de la factura
+        async function cargarDatosFactura() {
+            try {
+                const response = await fetch(`/api/factura/${idFactura}`);
+                if (!response.ok) throw new Error('Error al cargar la factura');
+                
+                const factura = await response.json();
+                console.log('Datos de factura completos recibidos:', factura);
+                console.log('Número de factura recibido:', factura.numero_factura);
+                
+                // Actualizar el visor de PDF y el enlace de descarga
+                document.getElementById('pdfViewer').src = `/${factura.ruta_pdf}`;
+                document.getElementById('downloadPdf').href = `/${factura.ruta_pdf}`;
+                
+                // Actualizar los detalles de la factura con mejor formato
+                document.getElementById('facturaDetails').innerHTML = `
+                    <div class="factura-detail-item">
+                        <span>Número de Factura</span>
+                        <strong>${factura.numero_factura}</strong>
+                    </div>
+                    <div class="factura-detail-item">
+                        <span>Referencia Bancaria</span>
+                        <strong>${factura.numero_referencia || 'N/A'}</strong>
+                    </div>
+                    <div class="factura-detail-item">
+                        <span>Fecha</span>
+                        <strong>${new Date(factura.fecha_emision).toLocaleDateString()}</strong>
+                    </div>
+                    <div class="factura-detail-item">
+                        <span>Cliente</span>
+                        <strong>${factura.nombre_cliente}</strong>
+                    </div>
+                    <div class="factura-total">
+                        <span>Total</span>
+                        <strong>Q. ${parseFloat(factura.total).toFixed(2)}</strong>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al cargar los datos de la factura');
+            }
+        }
+
+        // Cargar los datos cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', cargarDatosFactura);
+    </script>
+</body>
+</html> 

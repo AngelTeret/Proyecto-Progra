@@ -2,6 +2,57 @@ const { enviarTramaBanco, configurarBanco } = require('./utilsBanco');
 const { BANCO_CONFIG } = require('./config');
 const db = require('./database');
 const logger = require('./logger');
+const { procesarFactura } = require('./controllers/facturaController');
+
+// Función auxiliar para registrar eventos en la nueva bitácora
+async function registrarEventoBitacora(tipo, estado, descripcion, datos_adicionales = {}, numero_referencia = null, otros_datos = {}) {
+    try {
+        // Reemplazar cualquier formato de monto incorrecto en la descripción
+        descripcion = descripcion.replace(/\$(\d+(\.\d{1,2})?)/g, 'Q. $1');
+        descripcion = descripcion.replace(/Monto:\s*(\d+(\.\d{1,2})?)/g, 'Monto: Q. $1');
+        descripcion = descripcion.replace(/Total:\s*(\d+(\.\d{1,2})?)/g, 'Total: Q. $1');
+        
+        // Asegurarnos que el monto siempre se guarde como número en la tabla
+        let montoParaGuardar = null;
+        
+        // Si hay un monto en datos_adicionales o en otros_datos, lo procesamos
+        if (datos_adicionales.monto !== undefined) {
+            montoParaGuardar = typeof datos_adicionales.monto === 'string' ? 
+                parseFloat(datos_adicionales.monto.replace(/[^0-9.]/g, '')) : 
+                parseFloat(datos_adicionales.monto);
+            
+            datos_adicionales.monto_formateado = `Q. ${montoParaGuardar.toFixed(2)}`;
+            delete datos_adicionales.monto;
+        }
+        
+        if (otros_datos.monto !== undefined) {
+            montoParaGuardar = typeof otros_datos.monto === 'string' ? 
+                parseFloat(otros_datos.monto.replace(/[^0-9.]/g, '')) : 
+                parseFloat(otros_datos.monto);
+            
+            otros_datos.monto_formateado = `Q. ${montoParaGuardar.toFixed(2)}`;
+            delete otros_datos.monto;
+        }
+
+        // Asegurar que cualquier otro campo que contenga montos use el formato correcto
+        if (datos_adicionales.total_formateado) {
+            const total = parseFloat(datos_adicionales.total_formateado.replace(/[^0-9.]/g, ''));
+            datos_adicionales.total_formateado = `Q. ${total.toFixed(2)}`;
+        }
+
+        await db.crearRegistroBitacoraTransacciones({
+            tipo_evento: tipo,
+            estado: estado,
+            descripcion,
+            datos_adicionales,
+            numero_referencia,
+            monto: montoParaGuardar,
+            ...otros_datos
+        });
+    } catch (error) {
+        logger.error(`Error al registrar en bitácora: ${error.message}`);
+    }
+}
 
 // Endpoint para mostrar disponibilidad del formulario de pago
 exports.iniciarPago = (req, res) => {
@@ -17,65 +68,144 @@ function obtenerNombreCompleto(datosContacto) {
     return `${datosContacto.nombre || ''} ${datosContacto.apellido || ''}`.trim() || 'N/A';
 }
 
-// Auxiliar para verificar disponibilidad de datos de contacto
+// Auxiliar para verificar si hay datos de contacto disponibles
 function contactoDisponible(datosContacto) {
     return datosContacto && typeof datosContacto === 'object';
 }
 
-// Endpoint principal para procesar pagos
+// Procesar el pago
 exports.procesarPago = async (req, res) => {
-    logger.info(`Inicio de pago | Cliente: ${obtenerNombreCompleto(req.body.datosContacto)} | Monto: ${req.body.montoTotal} | Trama: ${req.body.trama}`);
-    console.log('Datos recibidos en el backend:', req.body);
+    const { trama, montoTotal, datosContacto, carrito: detallesCompra, numeroReferencia } = req.body;
 
-    const { trama, montoTotal, datosContacto } = req.body;
+    // Registrar inicio de la transacción con el número de referencia del frontend
+    await registrarEventoBitacora(
+        db.TIPOS_EVENTOS_TRANSACCIONES.PAGO_INICIADO,
+        db.ESTADOS_EVENTOS.PENDIENTE,
+        `Inicio de transacción de pago | Cliente: ${obtenerNombreCompleto(datosContacto)} | Ref: ${numeroReferencia}`,
+        {
+            monto: montoTotal,
+            cliente: datosContacto,
+            items: detallesCompra,
+            numero_referencia: numeroReferencia
+        },
+        numeroReferencia,
+        {
+            monto: montoTotal,
+            nombre_cliente: obtenerNombreCompleto(datosContacto),
+            email_cliente: contactoDisponible(datosContacto) ? datosContacto.correo : null,
+            numero_referencia: numeroReferencia
+        }
+    );
 
     if (!trama) {
-        logger.error('Datos incompletos - no se recibió la trama');
+        await registrarEventoBitacora(
+            db.TIPOS_EVENTOS_TRANSACCIONES.TRAMA_ERROR,
+            db.ESTADOS_EVENTOS.ERROR,
+            'Error: Trama bancaria no proporcionada',
+            { error: 'Trama no proporcionada' },
+            numeroReferencia
+        );
         return res.status(400).json({ 
             exito: false, 
-            mensaje: 'Se requiere la trama bancaria' 
+            mensaje: 'Se requiere una trama bancaria válida' 
         });
     }
 
-    if (!contactoDisponible(datosContacto)) {
-        console.log('No se recibieron datos de contacto - usando valores por defecto');
+    let datosTrama;
+    try {
+        datosTrama = {
+            tipo_transaccion: trama.substring(0, 2),
+            canal_terminal: trama.substring(2, 4),
+            id_empresa: trama.substring(4, 9),
+            id_sucursal: trama.substring(9, 13),
+            codigo_cliente: trama.substring(13, 21),
+            tipo_moneda: trama.substring(21, 23),
+            monto_entero: trama.substring(23, 33),
+            monto_decimal: trama.substring(33, 35),
+            numero_referencia: numeroReferencia,
+            fecha_hora_trama: trama.substring(47, 61)
+        };
+
+        // Registrar trama enviada
+        await registrarEventoBitacora(
+            db.TIPOS_EVENTOS_TRANSACCIONES.TRAMA_ENVIADA,
+            db.ESTADOS_EVENTOS.PENDIENTE,
+            `Trama bancaria enviada | Ref: ${numeroReferencia}`,
+            {
+                trama_enviada: trama,
+                datos_trama: datosTrama,
+                cliente: datosContacto,
+                monto: montoTotal,
+                numero_referencia: numeroReferencia
+            },
+            numeroReferencia,
+            {
+                trama_enviada: trama,
+                numero_referencia: numeroReferencia,
+                codigo_cliente: datosTrama.codigo_cliente,
+                monto: montoTotal,
+                nombre_cliente: obtenerNombreCompleto(datosContacto),
+                email_cliente: contactoDisponible(datosContacto) ? datosContacto.correo : null,
+                servidor_banco: 'Servidor Bancario'
+            }
+        );
+
+    } catch (error) {
+        await registrarEventoBitacora(
+            db.TIPOS_EVENTOS_TRANSACCIONES.TRAMA_ERROR,
+            db.ESTADOS_EVENTOS.ERROR,
+            'Error al procesar estructura de trama bancaria',
+            { error: error.message, trama },
+            null,
+            {
+                detalles_error: error.message
+            }
+        );
+        return res.status(400).json({ 
+            exito: false, 
+            mensaje: 'Error al procesar la trama bancaria' 
+        });
     }
 
-    const datosTrama = {
-        fecha_hora_trama: trama.substring(0, 14),
-        tipo_transaccion: trama.substring(14, 16),
-        canal_terminal: trama.substring(16, 18),
-        id_empresa: trama.substring(18, 22),
-        id_sucursal: trama.substring(22, 24),
-        codigo_cliente: trama.substring(24, 35),
-        tipo_moneda: trama.substring(35, 37),
-        monto_entero: trama.substring(37, 47),
-        monto_decimal: trama.substring(47, 49),
-        numero_referencia: trama.substring(49, 61)
-    };
-
-    configurarBanco(BANCO_CONFIG);
-    console.log(`Banco configurado en ${BANCO_CONFIG.host}:${BANCO_CONFIG.puerto}`);
-
     try {
-        logger.info(`Datos de trama extraídos | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)}`);
-
-        try {
-            const numeroReferenciaUnico = await db.generarNumeroReferencia();
-            datosTrama.numero_referencia = numeroReferenciaUnico;
-            console.log('Referencia generada:', numeroReferenciaUnico);
-        } catch (dbError) {
-            logger.error(`Error al generar número de referencia: ${dbError.message}`);
-        }
-
+        // Ya no generamos un nuevo número de referencia, usamos el de la trama
         const respuestaBanco = await enviarTramaBanco(trama);
-        console.log('Respuesta recibida del banco:', respuestaBanco);
-
         const estadoBanco = respuestaBanco.slice(61, 63);
+
+        // Extraer y formatear el monto de la respuesta del banco
+        const montoEnteroBanco = respuestaBanco.substring(47, 57); // 10 dígitos para la parte entera
+        const montoDecimalBanco = respuestaBanco.substring(57, 59); // 2 dígitos para los decimales
+        const montoLimpioBanco = montoEnteroBanco.replace(/^0+/, '');
+        const montoBanco = parseFloat(montoLimpioBanco) / 100;
+        const montoBancoStr = `Q. ${montoBanco.toFixed(2)}`;
+        const montoEnviadoStr = `Q. ${montoTotal.toFixed(2)}`;
+
+        // Registrar respuesta del banco
+        await registrarEventoBitacora(
+            db.TIPOS_EVENTOS_TRANSACCIONES.TRAMA_RECIBIDA,
+            estadoBanco === '01' ? db.ESTADOS_EVENTOS.EXITOSO : db.ESTADOS_EVENTOS.FALLIDO,
+            estadoBanco === '01' 
+                ? `Transacción aprobada exitosamente | Ref: ${datosTrama.numero_referencia} | Monto: ${montoEnviadoStr}`
+                : `Transacción rechazada | Ref: ${datosTrama.numero_referencia} | Monto: ${montoEnviadoStr}`,
+            {
+                trama_respuesta: respuestaBanco,
+                estado: estadoBanco,
+                referencia: datosTrama.numero_referencia,
+                monto: montoTotal,
+                cliente: datosContacto
+            },
+            datosTrama.numero_referencia,
+            {
+                trama_recibida: respuestaBanco,
+                codigo_respuesta_banco: estadoBanco,
+                servidor_banco: 'Servidor Bancario',
+                monto: montoTotal,
+                nombre_cliente: obtenerNombreCompleto(datosContacto),
+                email_cliente: contactoDisponible(datosContacto) ? datosContacto.correo : null
+            }
+        );
+
         let descripcionBanco = 'Desconocido';
-
-        logger.info(`Respuesta banco | Estado: ${estadoBanco} | Descripción: ${respuestaBanco}`);
-
         switch (estadoBanco) {
             case '01': descripcionBanco = 'Aprobada'; break;
             case '02': descripcionBanco = 'Rechazada'; break;
@@ -89,10 +219,9 @@ exports.procesarPago = async (req, res) => {
             default:   descripcionBanco = 'Estado desconocido';
         }
 
-        logger.info(`Resultado transacción | Estado: ${estadoBanco} (${descripcionBanco}) | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)}`);
-
+        let transaccionId;
         try {
-            await db.crearTransaccionBancaria({
+            const transaccion = await db.crearTransaccionBancaria({
                 tipo_transaccion: datosTrama.tipo_transaccion,
                 canal_terminal: datosTrama.canal_terminal,
                 id_empresa: datosTrama.id_empresa,
@@ -110,18 +239,139 @@ exports.procesarPago = async (req, res) => {
                 nombre_cliente: contactoDisponible(datosContacto) ? obtenerNombreCompleto(datosContacto) : '',
                 email_cliente: contactoDisponible(datosContacto) ? datosContacto.correo : '',
                 telefono_cliente: contactoDisponible(datosContacto) ? datosContacto.telefono : '',
-                direccion_cliente: contactoDisponible(datosContacto) ? datosContacto.direccion : ''
+                direccion_cliente: contactoDisponible(datosContacto) ? datosContacto.direccion : '',
+                detalles_compra: JSON.stringify(detallesCompra || []),
+                monto: parseFloat(montoTotal)  // Asegurarnos que se guarde como número
             });
+            transaccionId = transaccion.id_transaccion;
+
         } catch (dbError) {
-            logger.error(`Error al registrar la transacción bancaria: ${dbError.message}`);
+            await registrarEventoBitacora(
+                db.TIPOS_EVENTOS_TRANSACCIONES.PAGO_ERROR,
+                db.ESTADOS_EVENTOS.ERROR,
+                'Error al registrar transacción bancaria',
+                { error: dbError.message },
+                datosTrama.numero_referencia,
+                {
+                    detalles_error: dbError.message
+                }
+            );
         }
 
         if (estadoBanco === '01') {
-            logger.info(`Transacción exitosa | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)} | Monto: ${montoTotal}`);
-        } else if (estadoBanco === '09') {
-            logger.warn(`Transacción duplicada | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)}`);
+            try {
+                const factura = await procesarFactura({
+                    id_transaccion: transaccionId,
+                    nombre_cliente: contactoDisponible(datosContacto) ? obtenerNombreCompleto(datosContacto) : '',
+                    email_cliente: contactoDisponible(datosContacto) ? datosContacto.correo : '',
+                    telefono_cliente: contactoDisponible(datosContacto) ? datosContacto.telefono : '',
+                    direccion_cliente: contactoDisponible(datosContacto) ? datosContacto.direccion : '',
+                    monto: montoTotal,
+                    detalles_compra: JSON.stringify(detallesCompra || []),
+                    numero_referencia: datosTrama.numero_referencia
+                });
+
+                // Registrar pago completado (aprobado)
+                await registrarEventoBitacora(
+                    db.TIPOS_EVENTOS_TRANSACCIONES.PAGO_APROBADO,
+                    db.ESTADOS_EVENTOS.EXITOSO,
+                    `Pago completado exitosamente | Factura: ${factura.numero_factura} | Monto: ${montoEnviadoStr}`,
+                    {
+                        factura_id: factura.id_factura,
+                        transaccion_id: transaccionId,
+                        monto: montoTotal,
+                        cliente: datosContacto
+                    },
+                    datosTrama.numero_referencia,
+                    {
+                        id_transaccion: transaccionId,
+                        id_factura: factura.id_factura,
+                        numero_factura: factura.numero_factura,
+                        monto: montoTotal,
+                        nombre_cliente: obtenerNombreCompleto(datosContacto),
+                        email_cliente: contactoDisponible(datosContacto) ? datosContacto.correo : null
+                    }
+                );
+
+                // Registrar factura generada
+                await registrarEventoBitacora(
+                    db.TIPOS_EVENTOS_TRANSACCIONES.FACTURA_GENERADA,
+                    db.ESTADOS_EVENTOS.EXITOSO,
+                    `Factura generada exitosamente: ${factura.numero_factura} | Cliente: ${obtenerNombreCompleto(datosContacto)} | Total: ${montoEnviadoStr}`,
+                    {
+                        factura_id: factura.id_factura,
+                        transaccion_id: transaccionId,
+                        monto: montoTotal,
+                        cliente: datosContacto
+                    },
+                    datosTrama.numero_referencia,
+                    {
+                        id_transaccion: transaccionId,
+                        id_factura: factura.id_factura,
+                        numero_factura: factura.numero_factura,
+                        monto: montoTotal,
+                        nombre_cliente: obtenerNombreCompleto(datosContacto),
+                        email_cliente: contactoDisponible(datosContacto) ? datosContacto.correo : null
+                    }
+                );
+
+                return res.json({
+                    exito: true,
+                    mensaje: 'Pago aprobado. Se ha enviado la factura a su correo electrónico.',
+                    estadoBanco,
+                    descripcionBanco,
+                    tramaEnviada: trama,
+                    respuestaBanco,
+                    id_factura: factura.id_factura,
+                    numero_factura: factura.numero_factura
+                });
+            } catch (facturaError) {
+                await registrarEventoBitacora(
+                    db.TIPOS_EVENTOS_TRANSACCIONES.FACTURA_ERROR,
+                    db.ESTADOS_EVENTOS.ERROR,
+                    'Error al generar factura',
+                    { 
+                        error: facturaError.message,
+                        transaccion_id: transaccionId
+                    },
+                    datosTrama.numero_referencia,
+                    {
+                        detalles_error: facturaError.message,
+                        id_transaccion: transaccionId
+                    }
+                );
+
+                return res.json({
+                    exito: true,
+                    mensaje: 'Pago aprobado, pero hubo un error al generar la factura.',
+                    estadoBanco,
+                    descripcionBanco,
+                    tramaEnviada: trama,
+                    respuestaBanco
+                });
+            }
         } else {
-            logger.error(`Transacción fallida | Estado: ${estadoBanco} (${descripcionBanco}) | Referencia: ${datosTrama.numero_referencia} | Cliente: ${obtenerNombreCompleto(datosContacto)}`);
+            // Registrar pago rechazado
+            await registrarEventoBitacora(
+                db.TIPOS_EVENTOS_TRANSACCIONES.PAGO_RECHAZADO,
+                db.ESTADOS_EVENTOS.FALLIDO,
+                `Pago rechazado | Estado: ${estadoBanco} (${descripcionBanco})`,
+                {
+                    estado: estadoBanco,
+                    descripcion: descripcionBanco,
+                    transaccion_id: transaccionId,
+                    monto: `Q. ${montoTotal.toFixed(2)}`,
+                    cliente: datosContacto
+                },
+                datosTrama.numero_referencia,
+                {
+                    id_transaccion: transaccionId,
+                    codigo_respuesta_banco: estadoBanco,
+                    monto: montoTotal,
+                    nombre_cliente: obtenerNombreCompleto(datosContacto),
+                    email_cliente: contactoDisponible(datosContacto) ? datosContacto.correo : null
+                }
+            );
         }
 
         res.json({
@@ -134,7 +384,21 @@ exports.procesarPago = async (req, res) => {
         });
 
     } catch (err) {
-        logger.error(`Error crítico al procesar pago: ${err.message}`);
+        await registrarEventoBitacora(
+            db.TIPOS_EVENTOS_TRANSACCIONES.PAGO_ERROR,
+            db.ESTADOS_EVENTOS.ERROR,
+            'Error crítico al procesar pago',
+            { 
+                error: err.message,
+                trama,
+                cliente: datosContacto
+            },
+            null,
+            {
+                detalles_error: err.message
+            }
+        );
+
         res.status(200).json({ 
             exito: false, 
             mensaje: 'Error al comunicar con el banco: ' + err.message,

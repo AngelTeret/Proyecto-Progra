@@ -1,3 +1,4 @@
+// Bitácora visual: paginación, filtros y acciones sobre logs
 // logs_view.js
 // Script para bitácora visual con paginación, filtros, detalles expandibles y acciones sobre archivo
 // No modifica funciones ni variables existentes

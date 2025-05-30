@@ -47,9 +47,6 @@ function generarTramaEjemplo() {
                          '12345678901' + '01' + '0000012345' + '00' +
                          '000000000000' + '00';
 
-    console.log('Trama generada:', tramaEjemplo);
-    console.log('Longitud de la trama:', tramaEjemplo.length);
-
     messageInput.value = tramaEjemplo;
     return tramaEjemplo;
 }
@@ -63,7 +60,7 @@ function sendMessage() {
     const trama = messageInput.value.trim();
 
     if (trama.length !== 63 || !/^\d+$/.test(trama) || trama.substring(61, 63) !== '00') {
-        console.log(`Validación: longitud=${trama.length}, números=${/^\d+$/.test(trama)}, estado=${trama.substring(61, 63)}`);
+        // console.log(`Validación: longitud=${trama.length}, números=${/^\d+$/.test(trama)}, estado=${trama.substring(61, 63)}`);
     }
 
     procesandoTrama = true;
@@ -81,7 +78,7 @@ function sendMessage() {
             if (data.success) {
                 const estado = data.estado || '01';
                 const mensaje = data.mensaje || 'Transacción aprobada';
-                const monto = data.monto ? `$${data.monto.toFixed(2)}` : '';
+                const monto = data.monto ? `Q. ${data.monto.toFixed(2)}` : '';
                 const referenciaBanco = data.referencia || '';
                 const fechaActual = new Date().toLocaleString();
 
@@ -168,8 +165,6 @@ function sendMessage() {
         })
         .catch((error) => {
             procesandoTrama = false;
-
-            console.error('Error en la llamada fetch:', error);
 
             Swal.fire({
                 title: 'Error de comunicación',

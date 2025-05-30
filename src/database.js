@@ -1,3 +1,4 @@
+// Acceso a base de datos y helpers para la tienda
 const mysql = require('mysql2/promise');
 const path = require('path');
 const fs = require('fs').promises;
@@ -673,6 +674,434 @@ async function verificarNumeroReferenciaExiste(numeroRef) {
     }
 }
 
+// ============================================
+// REPOSITORIO DE FACTURAS
+// ============================================
+
+/**
+ * Genera un hash aleatorio de longitud específica
+ * @param {number} length Longitud deseada del hash
+ * @returns {string} Hash generado
+ */
+function generarHash(length) {
+    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let resultado = '';
+    for (let i = 0; i < length; i++) {
+        resultado += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+    }
+    return resultado;
+}
+
+/**
+ * Genera un número de factura único basado en la fecha y un hash
+ * @returns {Promise<string>} Número de factura generado
+ */
+async function generarNumeroFactura() {
+    const fecha = new Date();
+    const año = fecha.getFullYear();
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const hora = String(fecha.getHours()).padStart(2, '0');
+    const minuto = String(fecha.getMinutes()).padStart(2, '0');
+    const segundo = String(fecha.getSeconds()).padStart(2, '0');
+    
+    let intentos = 0;
+    const maxIntentos = 10;
+    
+    while (intentos < maxIntentos) {
+        // Generar un hash aleatorio de 6 caracteres
+        const hash = generarHash(6);
+        const numeroFactura = `FAC-${año}${mes}${dia}-${hora}${minuto}${segundo}-${hash}`;
+        
+        // Verificar si este número de factura ya existe
+        const [existe] = await pool.query(
+            'SELECT 1 FROM facturas WHERE numero_factura = ? LIMIT 1',
+            [numeroFactura]
+        );
+        
+        if (existe.length === 0) {
+            return numeroFactura;
+        }
+        
+        intentos++;
+    }
+    
+    // Si después de varios intentos no se genera un número único,
+    // usar timestamp como último recurso
+    const timestamp = Date.now().toString().slice(-6);
+    return `FAC-${año}${mes}${dia}-${hora}${minuto}${segundo}-${timestamp}`;
+}
+
+/**
+ * Crea una nueva factura en la base de datos
+ * @param {Object} facturaData Datos de la factura
+ * @returns {Promise<Object>} Factura creada
+ */
+async function crearFactura(facturaData) {
+    try {
+        // Si no se proporciona un número de factura, generamos uno
+        if (!facturaData.numero_factura) {
+            facturaData.numero_factura = await generarNumeroFactura();
+        }
+        
+        const [result] = await pool.query(`
+            INSERT INTO facturas (
+                id_transaccion,
+                numero_factura,
+                numero_referencia,
+                nombre_cliente,
+                email_cliente,
+                telefono_cliente,
+                direccion_cliente,
+                total,
+                detalles,
+                ruta_pdf
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            facturaData.id_transaccion,
+            facturaData.numero_factura,
+            facturaData.numero_referencia,
+            facturaData.nombre_cliente,
+            facturaData.email_cliente,
+            facturaData.telefono_cliente,
+            facturaData.direccion_cliente,
+            facturaData.total,
+            JSON.stringify(facturaData.detalles),
+            facturaData.ruta_pdf
+        ]);
+
+        return {
+            id_factura: result.insertId,
+            ...facturaData
+        };
+    } catch (error) {
+        console.error('Error en repository - crearFactura:', error);
+        throw error;
+    }
+}
+
+/**
+ * Obtiene una factura por su ID
+ * @param {number} idFactura ID de la factura
+ * @returns {Promise<Object>} Datos de la factura
+ */
+async function obtenerFacturaPorId(idFactura) {
+    try {
+        // Consulta principal con CAST explícito
+        const [facturas] = await pool.query(`
+            SELECT 
+                f.id_factura,
+                CAST(f.numero_factura AS CHAR(50)) as numero_factura,
+                f.nombre_cliente,
+                f.email_cliente,
+                f.telefono_cliente,
+                f.direccion_cliente,
+                f.total,
+                f.detalles,
+                f.ruta_pdf,
+                f.fecha_emision,
+                tb.* 
+            FROM facturas f
+            LEFT JOIN transacciones_bancarias tb ON f.id_transaccion = tb.id_transaccion
+            WHERE f.id_factura = ?
+        `, [idFactura]);
+
+        if (facturas.length === 0) {
+            return null;
+        }
+
+        const factura = facturas[0];
+
+        return {
+            ...factura,
+            detalles: JSON.parse(factura.detalles),
+            total: parseFloat(factura.total)
+        };
+    } catch (error) {
+        console.error(`Error en repository - obtenerFacturaPorId(${idFactura}):`, error);
+        throw error;
+    }
+}
+
+/**
+ * Actualiza la ruta del PDF de una factura
+ * @param {number} idFactura ID de la factura
+ * @param {string} rutaPdf Ruta del archivo PDF
+ * @returns {Promise<void>}
+ */
+async function actualizarRutaPdfFactura(idFactura, rutaPdf) {
+    try {
+        await pool.query(`
+            UPDATE facturas 
+            SET ruta_pdf = ?
+            WHERE id_factura = ?
+        `, [rutaPdf, idFactura]);
+    } catch (error) {
+        console.error(`Error en repository - actualizarRutaPdfFactura:`, error);
+        throw error;
+    }
+}
+
+// Verificar y actualizar la estructura de la tabla facturas si es necesaria
+async function verificarYActualizarTablaFacturas() {
+    try {
+        // Verificar columna numero_factura
+        const [columnas] = await pool.query(`
+            SELECT COLUMN_NAME, COLUMN_TYPE, CHARACTER_MAXIMUM_LENGTH 
+            FROM INFORMATION_SCHEMA.COLUMNS 
+            WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME = 'facturas' 
+            AND COLUMN_NAME IN ('numero_factura', 'numero_referencia')
+        `);
+
+        const tieneNumeroFactura = columnas.some(col => col.COLUMN_NAME === 'numero_factura');
+        const tieneNumeroReferencia = columnas.some(col => col.COLUMN_NAME === 'numero_referencia');
+
+        if (!tieneNumeroFactura || (tieneNumeroFactura && columnas.find(col => col.COLUMN_NAME === 'numero_factura').CHARACTER_MAXIMUM_LENGTH < 50)) {
+            await pool.query(`
+                ALTER TABLE facturas 
+                MODIFY COLUMN numero_factura VARCHAR(50) NOT NULL
+            `);
+        }
+
+        if (!tieneNumeroReferencia) {
+            await pool.query(`
+                ALTER TABLE facturas 
+                ADD COLUMN numero_referencia VARCHAR(12) AFTER numero_factura
+            `);
+        }
+    } catch (error) {
+        console.error('Error al verificar/actualizar estructura de tabla:', error);
+    }
+}
+
+// Llamar a la función cuando se inicia la aplicación
+verificarYActualizarTablaFacturas().catch(console.error);
+
+const TIPOS_EVENTOS_TRANSACCIONES = {
+    TRAMA_ENVIADA: 'TRAMA_ENVIADA',
+    TRAMA_RECIBIDA: 'TRAMA_RECIBIDA', 
+    TRAMA_ERROR: 'TRAMA_ERROR',
+    PAGO_INICIADO: 'PAGO_INICIADO',
+    PAGO_APROBADO: 'PAGO_APROBADO',
+    PAGO_RECHAZADO: 'PAGO_RECHAZADO',
+    PAGO_ERROR: 'PAGO_ERROR',
+    FACTURA_GENERADA: 'FACTURA_GENERADA',
+    FACTURA_ENVIADA: 'FACTURA_ENVIADA',
+    FACTURA_ERROR: 'FACTURA_ERROR'
+};
+
+/**
+ * Estados para eventos de transacciones
+ */
+const ESTADOS_EVENTOS = {
+    EXITOSO: 'EXITOSO',
+    FALLIDO: 'FALLIDO',
+    PENDIENTE: 'PENDIENTE',
+    ERROR: 'ERROR'
+};
+
+/**
+ * Función helper para parsear detalles de forma segura
+ * @param {*} detalles - Los detalles a parsear
+ * @returns {Object} - Objeto parseado o vacío
+ */
+function parsearDetallesSeguro(detalles) {
+    // Si es null o undefined, devolver objeto vacío
+    if (!detalles) {
+        return {};
+    }
+    
+    // Si ya es un objeto, devolverlo tal como está
+    if (typeof detalles === 'object' && detalles !== null) {
+        return detalles;
+    }
+    
+    // Si es una cadena, intentar parsear como JSON
+    if (typeof detalles === 'string') {
+        try {
+            return JSON.parse(detalles);
+        } catch (error) {
+            console.warn('Error al parsear detalles JSON:', detalles, error.message);
+            return { texto_original: detalles };
+        }
+    }
+    
+    // Para cualquier otro tipo, devolver objeto vacío
+    return {};
+}
+
+/**
+ * Crea un nuevo registro en la bitácora de transacciones
+ * @param {Object} registroData Datos del registro
+ * @returns {Promise<Object>} Registro creado
+ */
+async function crearRegistroBitacoraTransacciones(registroData) {
+    try {
+        const [result] = await pool.query(`
+            INSERT INTO bitacora_transacciones (
+                tipo_evento, estado, descripcion, trama_enviada, trama_recibida,
+                codigo_respuesta_banco, tiempo_respuesta_ms, servidor_banco,
+                id_transaccion, numero_referencia, monto, codigo_cliente,
+                nombre_cliente, email_cliente, id_factura, numero_factura,
+                ruta_pdf, ip_origen, detalles_error, datos_adicionales,
+                usuario_admin_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            registroData.tipo_evento,
+            registroData.estado,
+            registroData.descripcion,
+            registroData.trama_enviada || null,
+            registroData.trama_recibida || null,
+            registroData.codigo_respuesta_banco || null,
+            registroData.tiempo_respuesta_ms || null,
+            registroData.servidor_banco || null,
+            registroData.id_transaccion || null,
+            registroData.numero_referencia || null,
+            registroData.monto || null,
+            registroData.codigo_cliente || null,
+            registroData.nombre_cliente || null,
+            registroData.email_cliente || null,
+            registroData.id_factura || null,
+            registroData.numero_factura || null,
+            registroData.ruta_pdf || null,
+            registroData.ip_origen || null,
+            registroData.detalles_error || null,
+            JSON.stringify(registroData.datos_adicionales || {}),
+            registroData.usuario_admin_id || null
+        ]);
+
+        return {
+            id_registro: result.insertId,
+            ...registroData,
+            fecha_hora: new Date()
+        };
+    } catch (error) {
+        console.error('Error en repository - crearRegistroBitacoraTransacciones:', error);
+        throw error;
+    }
+}
+
+/**
+ * Obtiene registros de la bitácora de transacciones con filtros
+ * @param {Object} filtros Filtros para la búsqueda
+ * @returns {Promise<Array>} Lista de registros
+ */
+async function obtenerRegistrosBitacoraTransacciones(filtros = {}) {
+    try {
+        let query = `
+            SELECT 
+                bt.*,
+                ua.nombre as admin_nombre,
+                ua.email as admin_email
+            FROM bitacora_transacciones bt
+            LEFT JOIN usuarios_admin ua ON bt.usuario_admin_id = ua.id_usuario
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (filtros.tipo_evento) {
+            query += ' AND bt.tipo_evento = ?';
+            params.push(filtros.tipo_evento);
+        }
+
+        if (filtros.estado) {
+            query += ' AND bt.estado = ?';
+            params.push(filtros.estado);
+        }
+
+        if (filtros.fecha_inicio) {
+            query += ' AND bt.fecha_hora >= ?';
+            params.push(filtros.fecha_inicio);
+        }
+
+        if (filtros.fecha_fin) {
+            query += ' AND bt.fecha_hora <= ?';
+            params.push(filtros.fecha_fin);
+        }
+
+        if (filtros.numero_referencia) {
+            query += ' AND bt.numero_referencia = ?';
+            params.push(filtros.numero_referencia);
+        }
+
+        if (filtros.id_transaccion) {
+            query += ' AND bt.id_transaccion = ?';
+            params.push(filtros.id_transaccion);
+        }
+
+        if (filtros.numero_factura) {
+            query += ' AND bt.numero_factura = ?';
+            params.push(filtros.numero_factura);
+        }
+
+        if (filtros.codigo_respuesta_banco) {
+            query += ' AND bt.codigo_respuesta_banco = ?';
+            params.push(filtros.codigo_respuesta_banco);
+        }
+
+        // Ordenar por fecha descendente
+        query += ' ORDER BY bt.fecha_hora DESC';
+
+        // Paginación
+        if (filtros.limite) {
+            query += ' LIMIT ?';
+            params.push(parseInt(filtros.limite));
+
+            if (filtros.offset) {
+                query += ' OFFSET ?';
+                params.push(parseInt(filtros.offset));
+            }
+        }
+
+        console.log('Ejecutando query bitácora transacciones:', query);
+        console.log('Con parámetros:', params);
+
+        const [registros] = await pool.query(query, params);
+        console.log(`Query ejecutada, ${registros.length} registros obtenidos`);
+
+        return registros.map(registro => ({
+            ...registro,
+            datos_adicionales: parsearDetallesSeguro(registro.datos_adicionales)
+        }));
+    } catch (error) {
+        console.error('Error en repository - obtenerRegistrosBitacoraTransacciones:', error);
+        throw error;
+    }
+}
+
+/**
+ * Obtiene un registro específico de la bitácora de transacciones
+ * @param {number} idRegistro ID del registro
+ * @returns {Promise<Object>} Registro encontrado
+ */
+async function obtenerRegistroBitacoraTransaccionesPorId(idRegistro) {
+    try {
+        const [registros] = await pool.query(`
+            SELECT 
+                bt.*,
+                ua.nombre as admin_nombre,
+                ua.email as admin_email
+            FROM bitacora_transacciones bt
+            LEFT JOIN usuarios_admin ua ON bt.usuario_admin_id = ua.id_usuario
+            WHERE bt.id_registro = ?
+        `, [idRegistro]);
+
+        if (registros.length === 0) {
+            return null;
+        }
+
+        const registro = registros[0];
+        return {
+            ...registro,
+            datos_adicionales: parsearDetallesSeguro(registro.datos_adicionales)
+        };
+    } catch (error) {
+        console.error(`Error en repository - obtenerRegistroBitacoraTransaccionesPorId(${idRegistro}):`, error);
+        throw error;
+    }
+}
+
 // Exportar tanto el pool de conexiones como las funciones de repositorio
 module.exports = {
     // Conexión a la base de datos (para compatibilidad con código existente)
@@ -696,5 +1125,18 @@ module.exports = {
     
     // Funciones de transacciones bancarias
     crearTransaccionBancaria,
-    generarNumeroReferencia
+    generarNumeroReferencia,
+    
+    // Funciones de facturas
+    generarNumeroFactura,
+    crearFactura,
+    obtenerFacturaPorId,
+    actualizarRutaPdfFactura,
+    
+    // Funciones de bitácora
+    TIPOS_EVENTOS_TRANSACCIONES,
+    ESTADOS_EVENTOS,
+    crearRegistroBitacoraTransacciones,
+    obtenerRegistrosBitacoraTransacciones,
+    obtenerRegistroBitacoraTransaccionesPorId
 };

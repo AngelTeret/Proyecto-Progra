@@ -1,7 +1,9 @@
-// Rutas principales para el sistema de tienda
+// Rutas y API principales para tienda y administración
 const express = require('express');
 const router = express.Router();
 const path = require('path');
+const jwt = require('jsonwebtoken');
+const { JWT_CONFIG } = require('./config');
 
 // Middleware para permitir acceso público al chat y su API
 router.use((req, res, next) => {
@@ -21,9 +23,10 @@ const adminAuthController = require('./controllers/adminAuthController');
 const dashboardController = require('./controllers/dashboardController');
 const categoriasController = require('./controllers/categoriasController');
 const pagoController = require('./pagoController');
+const { obtenerDatosFactura } = require('./controllers/facturaController');
 
-// Middleware de autenticación
-const { verificarToken, verificarAdmin } = require('./controllers/adminAuthController');
+// Importar middlewares de autenticación
+const { verificarToken, verificarAdmin } = adminAuthController;
 
 // Rutas de productos
 router.get('/api/productos', productosController.obtenerProductos);
@@ -130,10 +133,24 @@ router.post('/api/trama', async (req, res) => {
                     mensaje = 'Estado desconocido: ' + estadoTrama;
             }
             
-            // Extraer más detalles de la trama para mostrar al cliente
-            const monto = tramaRespuesta.substring(37, 49);
-            const montoFormateado = parseFloat(monto.substring(0, 10) + '.' + monto.substring(10, 12));
-            const referencia = tramaRespuesta.substring(49, 61);
+            // Extraer el monto de la posición correcta en la trama
+            const montoEntero = tramaRespuesta.substring(41, 51); // 10 dígitos para la parte entera (00000560000)
+            const montoDecimal = tramaRespuesta.substring(51, 53); // 2 dígitos para los decimales (00)
+            
+            // Procesar el monto correctamente
+            const montoLimpio = montoEntero.replace(/^0+/, ''); // Eliminar ceros a la izquierda
+            const montoFormateado = parseFloat(montoLimpio) / 100; // Dividir por 100 para obtener el formato decimal correcto
+            const referencia = tramaRespuesta.substring(53, 65); // La referencia viene después del monto
+            
+            // Formatear el monto de manera consistente
+            const montoFormateadoStr = `Q. ${montoFormateado.toFixed(2)}`;
+            
+            // Construir el mensaje con el formato correcto desde el inicio
+            if (estadoTrama === '01') {
+                mensaje = `Transacción aprobada exitosamente | Ref: ${referencia} | Monto: ${montoFormateadoStr}`;
+            } else {
+                mensaje = `${mensaje} | Ref: ${referencia} | Monto: ${montoFormateadoStr}`;
+            }
             
             return res.json({
                 success: exito,
@@ -141,6 +158,7 @@ router.post('/api/trama', async (req, res) => {
                 estado: estadoTrama,
                 trama_respuesta: tramaRespuesta,
                 monto: montoFormateado,
+                monto_formateado: montoFormateadoStr,
                 referencia: referencia,
                 fecha: new Date().toISOString()
             });
@@ -227,7 +245,11 @@ router.get('/api/tienda/productos', (req, res) => {
 // Autenticación admin
 router.post('/api/admin/auth/login', adminAuthController.login);
 
-// Dashboard
+// Dashboard y rutas protegidas
+router.get('/admin/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/dashboard.html'));
+});
+
 router.get('/api/admin/dashboard', verificarToken, dashboardController.getDashboardData);
 
 // Productos - CRUD
@@ -268,63 +290,57 @@ router.delete('/api/admin/categorias/:id', verificarToken, categoriasController.
 const fs = require('fs');
 const fsPromises = fs.promises;
 
-// API para obtener logs en formato JSON para la tabla visual
-router.get('/api/logs', (req, res) => {
-    const logPath = path.join(__dirname, 'logs', 'combined.log');
-    fs.readFile(logPath, 'utf8', (err, data) => {
-        if (err) return res.json([]);
-        const lines = data.trim().split('\n').filter(Boolean);
-        const logs = lines.map(line => {
-            const match = line.match(/^\[(.*?)\] (\w+): (.*)$/);
-            if (match) {
-                return {
-                    timestamp: match[1],
-                    level: match[2],
-                    message: match[3]
-                };
-            } else {
-                return { timestamp: '', level: 'info', message: line };
-            }
-        });
-        res.json(logs);
-    });
+// === RUTAS DE BITÁCORA ===
+const bitacoraController = require('./controllers/bitacoraController');
+
+// Vista de la bitácora (requiere autenticación de admin)
+router.get('/admin/bitacora', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/admin/bitacora.html'));
 });
 
-// Ruta visual para la bitácora (logs)
-router.get(['/bitacora', '/logs'], (req, res) => {
-    const htmlPath = path.join(__dirname, 'views', 'logs_view.html');
-    res.sendFile(htmlPath);
-});
+// API para obtener registros de la bitácora
+router.get('/api/bitacora', verificarToken, verificarAdmin, bitacoraController.obtenerRegistros);
 
-// --- ENDPOINTS PARA MANEJO DE ARCHIVO DE LOGS ---
-const LOG_COMBINED = path.join(__dirname, 'logs', 'combined.log');
-const LOG_ERROR = path.join(__dirname, 'logs', 'error.log');
+// API para obtener un registro específico
+router.get('/api/bitacora/:id', verificarToken, verificarAdmin, bitacoraController.obtenerRegistroPorId);
 
-// Descargar logs (combined.log)
-router.get('/api/logs/download', async (req, res) => {
-    try {
-        if (!fs.existsSync(LOG_COMBINED)) {
-            return res.status(404).send('Archivo de logs no encontrado');
-        }
-        res.download(LOG_COMBINED, 'combined.log');
-    } catch (err) {
-        res.status(500).send('Error al descargar el archivo de logs');
-    }
-});
-
-// Limpiar logs (combined.log y error.log)
-router.post('/api/logs/clear', async (req, res) => {
-    try {
-        await fsPromises.writeFile(LOG_COMBINED, '');
-        if (fs.existsSync(LOG_ERROR)) {
-            await fsPromises.writeFile(LOG_ERROR, '');
-        }
-        res.sendStatus(200);
-    } catch (err) {
-        res.status(500).send('No se pudo limpiar el archivo de logs');
-    }
-});
+// API para crear un nuevo registro (uso interno)
+router.post('/api/bitacora', verificarToken, verificarAdmin, bitacoraController.registrarEvento);
 
 // === FIN BITÁCORA ===
+
+// Ruta para ver la factura
+router.get('/factura/:idfactura', async (req, res) => {
+    try {
+        const factura = await obtenerDatosFactura(req.params.idfactura);
+        if (!factura) {
+            return res.status(404).sendFile(path.join(__dirname, 'views/error.html'));
+        }
+        // En lugar de renderizar, enviamos el archivo HTML
+        res.sendFile(path.join(__dirname, 'views/factura.html'));
+    } catch (error) {
+        console.error('Error al obtener la factura:', error);
+        res.status(500).sendFile(path.join(__dirname, 'views/error.html'));
+    }
+});
+
+// API para obtener datos de la factura
+router.get('/api/factura/:idfactura', async (req, res) => {
+    try {
+        const factura = await obtenerDatosFactura(req.params.idfactura);
+        if (!factura) {
+            return res.status(404).json({ error: 'Factura no encontrada' });
+        }
+        res.json(factura);
+    } catch (error) {
+        console.error('Error al obtener la factura:', error);
+        res.status(500).json({ error: 'Error al cargar la factura' });
+    }
+});
+
+// Redirección de /admin a /admin/login
+router.get('/admin', (req, res) => {
+    res.redirect('/admin/login');
+});
 
 module.exports = router;

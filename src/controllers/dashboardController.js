@@ -1,107 +1,73 @@
-const mysql = require('mysql2/promise');
-
-// Configuración de la conexión a la base de datos
-const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'chatapp',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
+const db = require('../database');
 
 // Obtener datos del dashboard
 async function getDashboardData(req, res) {
-    let connection;
     try {
-        connection = await pool.getConnection();
-
-        // Obtener ventas del día
-        const [ventasDia] = await connection.query(`
-            SELECT COALESCE(SUM(total), 0) as total
-            FROM pedidos
-            WHERE DATE(fecha_pedido) = CURDATE()
-            AND estado = 'pagado'
-        `);
-
-        // Obtener pedidos pendientes
-        const [pedidosPendientes] = await connection.query(`
-            SELECT COUNT(*) as total
-            FROM pedidos
-            WHERE estado = 'pendiente'
-        `);
-
-        // Obtener productos activos
-        const [productosActivos] = await connection.query(`
-            SELECT COUNT(*) as total
+        // 1. Resumen de Productos
+        const [resumenProductos] = await db.pool.query(`
+            SELECT 
+                COUNT(*) as total_productos,
+                COUNT(CASE WHEN estado = 'activo' THEN 1 END) as productos_activos,
+                COUNT(CASE WHEN estado = 'agotado' THEN 1 END) as productos_agotados,
+                COALESCE(SUM(stock), 0) as stock_total
             FROM productos
-            WHERE estado = 'activo'
         `);
 
-        // Obtener total de clientes (pedidos únicos)
-        const [totalClientes] = await connection.query(`
-            SELECT COUNT(DISTINCT email_cliente) as total
-            FROM pedidos
-        `);
-
-        // Obtener ventas de los últimos 7 días
-        const [ventasUltimos7Dias] = await connection.query(`
+        // 2. Resumen de Categorías
+        const [categorias] = await db.pool.query(`
             SELECT 
-                DATE(fecha_pedido) as fecha,
-                SUM(total) as total
-            FROM pedidos
-            WHERE fecha_pedido >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-            AND estado = 'pagado'
-            GROUP BY DATE(fecha_pedido)
-            ORDER BY fecha
+                c.nombre as categoria,
+                COUNT(pc.id_producto) as total_productos
+            FROM categorias c
+            LEFT JOIN producto_categoria pc ON c.id_categoria = pc.id_categoria
+            GROUP BY c.id_categoria, c.nombre
         `);
 
-        // Obtener productos más vendidos
-        const [productosMasVendidos] = await connection.query(`
+        // 3. Eventos de Bitácora
+        const [eventosBitacora] = await db.pool.query(`
             SELECT 
-                p.nombre,
-                SUM(dp.cantidad) as total_vendido
-            FROM detalle_pedido dp
-            JOIN productos p ON dp.id_producto = p.id_producto
-            JOIN pedidos pe ON dp.id_pedido = pe.id_pedido
-            WHERE pe.estado = 'pagado'
-            GROUP BY p.id_producto
-            ORDER BY total_vendido DESC
-            LIMIT 5
+                tipo_evento,
+                COUNT(*) as total
+            FROM bitacora_transacciones
+            WHERE fecha_hora >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+            GROUP BY tipo_evento
+            ORDER BY total DESC
         `);
 
-        // Obtener últimos pedidos
-        const [ultimosPedidos] = await connection.query(`
-            SELECT 
-                id_pedido,
-                nombre_cliente,
-                total,
-                estado,
-                fecha_pedido
-            FROM pedidos
-            ORDER BY fecha_pedido DESC
-            LIMIT 5
-        `);
+        // Asegurarse de que resumenProductos[0] existe
+        const resumen = resumenProductos[0] || {
+            total_productos: 0,
+            productos_activos: 0,
+            productos_agotados: 0,
+            stock_total: 0
+        };
 
         res.json({
-            ventasDia: ventasDia[0].total,
-            pedidosPendientes: pedidosPendientes[0].total,
-            productosActivos: productosActivos[0].total,
-            totalClientes: totalClientes[0].total,
-            ventasUltimos7Dias,
-            productosMasVendidos,
-            ultimosPedidos
+            productos: {
+                resumen: {
+                    total_productos: parseInt(resumen.total_productos) || 0,
+                    productos_activos: parseInt(resumen.productos_activos) || 0,
+                    productos_agotados: parseInt(resumen.productos_agotados) || 0,
+                    stock_total: parseInt(resumen.stock_total) || 0
+                }
+            },
+            categorias: categorias.map(cat => ({
+                categoria: cat.categoria,
+                total_productos: parseInt(cat.total_productos) || 0
+            })),
+            bitacora: {
+                eventos24h: eventosBitacora.map(ev => ({
+                    tipo_evento: ev.tipo_evento,
+                    total: parseInt(ev.total) || 0
+                }))
+            }
         });
 
     } catch (error) {
         console.error('Error al obtener datos del dashboard:', error);
         res.status(500).json({
-            error: true,
-            mensaje: 'Error al obtener datos del dashboard'
+            error: 'Error al cargar los datos del dashboard'
         });
-    } finally {
-        if (connection) connection.release();
     }
 }
 

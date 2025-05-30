@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finalizar Compra - Rhode</title>
+    <title>Finalizar Compra - Rare Beauty</title>
     <link rel="stylesheet" href="/styles/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- SweetAlert2 CSS y JS -->
@@ -72,47 +72,48 @@
             <div id="modalPagoForm">
                 <div class="campo-modal">
                     <label for="tipoTransaccion">Tipo de Transacción</label>
-                    <select id="tipoTransaccion" class="input-modal">
+                    <select id="tipoTransaccion" class="input-modal" required>
+                        <option value="">Seleccione una opción</option>
                         <option value="01">Pago</option>
-                        <option value="02">Retiro</option>
-                        <option value="03">Depósito</option>
+                        <option value="02">Reversa</option>
+                        <option value="03">Consulta</option>
                     </select>
                 </div>
                 <div class="campo-modal">
                     <label for="canalTerminal">Canal/Terminal</label>
-                    <select id="canalTerminal" class="input-modal">
-                        <option value="01">Pagos Web</option>
-                        <option value="02">Banca Web</option>
-                        <option value="03">Cajero</option>
+                    <select id="canalTerminal" class="input-modal" required>
+                        <option value="">Seleccione una opción</option>
+                        <option value="01">ATM</option>
+                        <option value="02">Online</option>
+                        <option value="03">Móvil</option>
                         <option value="04">POS</option>
-                        <option value="05">POS2</option>
                     </select>
                 </div>
-                <div class="campo-modal">
+                <div class="campo-modal" style="display: none;">
                     <label for="idEmpresa">ID de Empresa</label>
-                    <input type="text" id="idEmpresa" class="input-modal" value="0001" maxlength="4" pattern="[0-9]{4}">
+                    <input type="hidden" id="idEmpresa" class="input-modal" value="0529" maxlength="4" pattern="[0-9]{4}">
                 </div>
-                <div class="campo-modal">
+                <div class="campo-modal" style="display: none;">
                     <label for="idSucursal">ID de Sucursal</label>
-                    <input type="text" id="idSucursal" class="input-modal" value="01" maxlength="2" pattern="[0-9]{2}">
+                    <input type="hidden" id="idSucursal" class="input-modal" value="13" maxlength="2" pattern="[0-9]{2}">
                 </div>
                 <div class="campo-modal">
                     <label for="codigoCliente">Código de Cliente</label>
                     <input type="text" id="codigoCliente" class="input-modal" placeholder="Ingrese código de cliente"
-                        maxlength="10" pattern="[0-9]{10}">
+                        maxlength="10" pattern="[0-9]{10}" required>
                 </div>
                 <div class="campo-modal">
                     <label for="tipoMoneda">Tipo de Moneda</label>
-                    <select id="tipoMoneda" class="input-modal">
+                    <select id="tipoMoneda" class="input-modal" required>
+                        <option value="">Seleccione una opción</option>
                         <option value="01">GTQ (Quetzal)</option>
                         <option value="02">USD (Dólar)</option>
-                        <option value="03">EUR (Euro)</option>
                     </select>
                 </div>
                 <div class="campo-modal">
                     <label for="numeroReferencia">Número de Referencia</label>
-                    <input type="text" id="numeroReferencia" class="input-modal" placeholder="Número de referencia"
-                        maxlength="12" pattern="[0-9]{12}">
+                    <input type="text" id="numeroReferencia" class="input-modal" placeholder="Se genera automáticamente"
+                        maxlength="12" pattern="[0-9]{12}" readonly>
                 </div>
                 <div id="resultado-transaccion" class="hidden">
                     <div class="procesando-pago">

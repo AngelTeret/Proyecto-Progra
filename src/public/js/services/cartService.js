@@ -1,3 +1,4 @@
+// Lógica y persistencia del carrito de compras
 const cartService = {
     carrito: [],
     

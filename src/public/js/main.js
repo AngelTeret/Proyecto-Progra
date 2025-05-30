@@ -92,7 +92,6 @@ document.addEventListener('DOMContentLoaded', function () {
 // Funciones del carrito
 // Agrega un producto al carrito, validando stock y mostrando feedback al usuario
 function agregarAlCarrito(idProducto) {
-    console.log('Agregando producto al carrito:', idProducto);
     fetch(`/api/productos/${idProducto}`)
         .then(res => {
             if (!res.ok) throw new Error('Error al obtener el producto');
@@ -102,8 +101,6 @@ function agregarAlCarrito(idProducto) {
             if (!producto || producto.error) {
                 throw new Error(producto.mensaje || 'Error al obtener el producto');
             }
-
-            console.log('Producto obtenido:', producto);
 
             // Asegurar que estamos usando la versión más reciente del carrito
             carrito = JSON.parse(localStorage.getItem('carrito')) || [];
@@ -136,7 +133,6 @@ function agregarAlCarrito(idProducto) {
                     return;
                 }
                 productoExistente.cantidad++;
-                console.log('Aumentada cantidad de producto existente:', productoExistente);
             } else {
                 if (prod.stock <= 0) {
                     Swal.fire({
@@ -151,12 +147,10 @@ function agregarAlCarrito(idProducto) {
                     return;
                 }
                 carrito.push(prod);
-                console.log('Agregado nuevo producto al carrito:', prod);
             }
 
             // Guardar en localStorage y actualizar interfaz
             localStorage.setItem('carrito', JSON.stringify(carrito));
-            console.log('Carrito actualizado en localStorage:', carrito);
 
             // Actualizar interfaz inmediatamente
             actualizarContadorCarrito();
@@ -174,7 +168,6 @@ function agregarAlCarrito(idProducto) {
             });
         })
         .catch(error => {
-            console.error('Error:', error);
             Swal.fire({
                 title: 'Error',
                 text: 'No se pudo agregar el producto',
@@ -189,18 +182,13 @@ function agregarAlCarrito(idProducto) {
 
 // Cambia la cantidad de un producto en el carrito, respetando límites de stock
 function cambiarCantidad(idProducto, cambio) {
-    console.log('Cambiando cantidad:', idProducto, 'cambio:', cambio);
-
     // Asegurar que tenemos el carrito más actualizado
     carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 
     const item = carrito.find(prod => prod.id_producto === idProducto);
     if (!item) {
-        console.error('Producto no encontrado en el carrito');
         return;
     }
-
-    console.log('Cantidad actual:', item.cantidad, 'stock:', item.stock);
 
     // Calcular nueva cantidad respetando límites
     let nuevaCantidad = item.cantidad;
@@ -216,11 +204,9 @@ function cambiarCantidad(idProducto, cambio) {
 
     // Actualizar cantidad
     item.cantidad = nuevaCantidad;
-    console.log('Nueva cantidad:', item.cantidad);
 
     // Guardar en localStorage
     localStorage.setItem('carrito', JSON.stringify(carrito));
-    console.log('Carrito actualizado en localStorage');
 
     // Actualizar la interfaz inmediatamente
     actualizarCarritoModal();
@@ -229,8 +215,6 @@ function cambiarCantidad(idProducto, cambio) {
 
 // Elimina un producto del carrito y actualiza la UI
 function eliminarDelCarrito(idProducto) {
-    console.log('Eliminando producto del carrito:', idProducto);
-
     // Asegurar que tenemos el carrito más actualizado
     carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 
@@ -264,7 +248,6 @@ function abrirModalCarrito() {
                 const btnVerificar = document.querySelector('.modern-cart-btn-checkout');
                 if (btnVerificar) {
                     btnVerificar.style.display = 'block';
-                    console.log('Asegurando que el botón VERIFICAR sea visible');
                 }
             }
         }
@@ -314,18 +297,12 @@ function actualizarCarritoModal() {
     // Cambiar a usar el selector correcto que coincide con el HTML
     const itemsCarrito = document.getElementById('items-carrito');
     if (!itemsCarrito) {
-        console.error('No se encontró el contenedor de items del carrito #items-carrito');
         return;
     }
 
     // También actualizar el contador de artículos
     const cantidadArticulos = document.getElementById('cantidadArticulos');
     const totalElement = document.getElementById('total-amount');
-
-    // Reducir logs innecesarios - solo mostrar si hay elementos en el carrito
-    if (carrito.length > 0) {
-        console.log('Carrito actual en actualizarCarritoModal:', carrito);
-    }
 
     // Si el carrito está vacío, mostrar mensaje
     if (carrito.length === 0) {
@@ -346,9 +323,6 @@ function actualizarCarritoModal() {
     let total = 0;
     let cantidadTotal = 0;
 
-    console.log('Renderizando items del carrito:', carrito.length);
-
-    // Ahora usamos el selector correcto - itemsCarrito
     itemsCarrito.innerHTML = carrito.map(item => {
         const subtotal = item.precio * item.cantidad;
         total += subtotal;
@@ -357,8 +331,6 @@ function actualizarCarritoModal() {
         // Controles de cantidad: deshabilitar - si cantidad==1, deshabilitar + si cantidad==stock
         const minusDisabled = item.cantidad <= 1 ? 'disabled' : '';
         const plusDisabled = item.cantidad >= item.stock ? 'disabled' : '';
-
-        console.log(`Renderizando producto: ${item.nombre}, cantidad: ${item.cantidad}, precio: ${item.precio}`);
 
         return `
             <div class="modern-cart-item">
@@ -380,8 +352,6 @@ function actualizarCarritoModal() {
         `;
     }).join('');
 
-    console.log(`Total calculado: ${total.toFixed(2)}, cantidad total: ${cantidadTotal}`);
-
     if (totalElement) {
         totalElement.textContent = `Q. ${total.toFixed(2)}`;
     }
@@ -389,10 +359,7 @@ function actualizarCarritoModal() {
         cantidadArticulos.textContent = cantidadTotal.toString();
     }
 
-
     actualizarContadorCarrito();
-
-    console.log('Modal del carrito actualizado correctamente');
 }
 
 
@@ -479,7 +446,6 @@ async function cargarProductos() {
             </div>
         `).join('');
     } catch (error) {
-        console.error('Error al cargar productos:', error);
         const contenedor = document.getElementById('galeriaProductos');
         contenedor.innerHTML = `
             <div class="error-mensaje">
@@ -488,7 +454,6 @@ async function cargarProductos() {
             </div>
         `;
     }
-
 }
 
 // CARRITO: carga productos del carrito y sugerencias
@@ -520,124 +485,93 @@ function cargarCarrito() {
 // PAGO: muestra formulario y resumen
 // Renderiza el resumen de compra y formulario de pago en la página de pago
 function cargarPago() {
-    // Asegurar que estamos usando la versión más actualizada del carrito
-    carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-
-    // Actualizar contador del carrito en la cabecera
-    actualizarContadorCarrito();
-
-    // Obtener el contenedor del resumen
-    const resumen = document.getElementById('resumenPago');
-    if (!resumen) {
-        console.error('No se encontró el elemento resumenPago');
-        return;
-    }
-
-    // Si el carrito está vacío, mostrar mensaje
-    if (!carrito.length) {
-        resumen.innerHTML = '<p>No hay productos en tu carrito.</p>';
-        return;
-    }
-
-    // Calcular totales
-    let subtotal = 0;
-    let html = '';
-
-    // Crear un contenedor con desplazamiento para los productos
-    html += '<div class="pago-items-container pago-items-compact">';
-
-    // Generar HTML para cada producto
-    html += carrito.map(item => {
-        const itemTotal = item.precio * item.cantidad;
-        subtotal += itemTotal;
-        return `
-        <div class="pago-item">
-            <img src="${item.imagen || '/img/placeholder.png'}" alt="${item.nombre}" class="pago-item-img">
-            <div class="pago-item-info">
-                <div class="pago-item-name">${item.nombre || 'Producto'}</div>
-                <div class="pago-item-variant">${item.descripcion || ''} (${item.cantidad})</div>
-            </div>
-            <div class="pago-item-price">Q. ${(item.precio * item.cantidad).toFixed(2)}</div>
-        </div>`;
-    }).join('');
-
-    // Cerrar el contenedor de productos
-    html += '</div>';
-
-    // Agregar un divisor antes del resumen
-    html += '<div class="pago-divider"></div>';
-
-    // Resumen de costos con diseño mejorado
-    html += `
-    <div class="pago-summary">
-        <div class="pago-total-row">
-            <span>Total</span>
-            <span>Q. ${subtotal.toFixed(2)}</span>
-        </div>
-    </div>
-    <button class="pago-submit" onclick="enviarPago(event)">FINALIZAR COMPRA</button>
-    `;
-
-    // Actualizar el contenido del resumen
-    resumen.innerHTML = html;
-}
-
-// Envía los datos del formulario y carrito al backend para procesar el pago
-function enviarPago(event) {
-    event.preventDefault();
-
-    // Obtener datos del formulario de contacto
-    const nombre = document.getElementById('nombrePila').value.trim();
-    const apellido = document.getElementById('apellido').value.trim();
-    const direccion = document.getElementById('direccion').value.trim();
-    const correo = document.getElementById('correo').value.trim();
-    const telefono = document.getElementById('telefono').value.trim();
-    // Obtener datos de selección de pago
-    const tipoTransaccion = document.getElementById('tipoTransaccion').value;
-    const canalTerminal = document.getElementById('canalTerminal').value;
-    // Obtener datos del carrito
+    console.log('Cargando página de pago...');
+    
+    // Obtener el carrito del localStorage
     const carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    // Obtener total
-    let total = 0;
-    carrito.forEach(item => {
-        total += (item.precio * item.cantidad);
-    });
-    // Construir el objeto de datos para el backend
-    const datosPago = {
-        tipoTransaccion,
-        canalTerminal,
-        // Puedes agregar los campos requeridos por el backend aquí:
-        // idEmpresa, idSucursal, codigoCliente, tipoMoneda, numeroReferencia
-        montoTotal: total,
-        datosContacto: {
-            nombre,
-            apellido,
-            direccion,
-            correo,
-            telefono
-        },
-        carrito
-    };
-    // Enviar al backend para procesar el pago
-    fetch('/api/pago/procesar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datosPago)
-    })
-        .then(res => res.json())
-        .then(respuesta => {
-            mostrarResultadoTransaccion(respuesta);
-        })
-        .catch(error => {
-            mostrarErrorTransaccion(error);
+    
+    if (!carrito.length) {
+        window.location.href = '/productos';
+        return;
+    }
+
+    // Actualizar el resumen de pago
+    uiService.actualizarResumenPago(carrito);
+    
+    // Inicializar el formulario de pago con valores predeterminados
+    uiService.inicializarFormularioPago();
+    
+    // Configurar el botón de procesar pago
+    const btnProcesarPago = document.getElementById('btnProcesarPago');
+    if (btnProcesarPago) {
+        btnProcesarPago.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            // Obtener datos del formulario
+            const datosPago = uiService.obtenerDatosFormularioPago();
+            if (!datosPago) return; // La validación falló
+            
+            // Mostrar spinner de procesamiento
+            document.getElementById('btnProcesarPago').style.display = 'none';
+            document.getElementById('resultado-transaccion').classList.remove('hidden');
+            
+            try {
+                // Obtener datos del contacto
+                const datosContacto = {
+                    nombre: document.getElementById('nombrePila').value,
+                    apellido: document.getElementById('apellido').value,
+                    direccion: document.getElementById('direccion').value,
+                    correo: document.getElementById('correo').value,
+                    telefono: document.getElementById('telefono').value
+                };
+                
+                // Calcular monto total
+                const montoTotal = carrito.reduce((total, item) => total + (item.precio * item.cantidad), 0);
+                
+                // Construir la trama bancaria
+                const tramaEnviar = 
+                    datosPago.tipoTransaccion +
+                    datosPago.canalTerminal +
+                    datosPago.idEmpresa.padStart(5, '0') +
+                    datosPago.idSucursal.padStart(4, '0') +
+                    datosPago.codigoCliente.padStart(8, '0') +
+                    datosPago.tipoMoneda +
+                    Math.floor(montoTotal).toString().padStart(10, '0') +
+                    (montoTotal % 1).toFixed(2).substring(2).padStart(2, '0') +
+                    datosPago.numeroReferencia;
+                
+                // Enviar la solicitud al servidor
+                const response = await fetch('/api/pago/procesar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        trama: tramaEnviar,
+                        montoTotal: montoTotal,
+                        datosContacto: datosContacto,
+                        carrito: carrito
+                    })
+                });
+                
+                const resultado = await response.json();
+                console.log('Respuesta del servidor:', resultado);
+                
+                // Mostrar el resultado
+                uiService.mostrarResultadoTransaccion(resultado);
+                
+            } catch (error) {
+                console.error('Error al procesar el pago:', error);
+                uiService.mostrarErrorTransaccion(error);
+            }
         });
+    }
 }
 
 // Mostrar el resultado de la transacción usando SweetAlert2
 // Muestra el resultado de la transacción bancaria usando SweetAlert2
 // Proporciona feedback visual según el estado de la transacción
 function mostrarResultadoTransaccion(respuesta) {
-    console.log('Mostrando resultado de la transacción:', respuesta);
     document.querySelector('.procesando-pago').style.display = 'none';
     document.getElementById('modalPago').style.display = 'none'; // Ocultar modal de pago
 
@@ -679,25 +613,20 @@ function mostrarResultadoTransaccion(respuesta) {
         icon: icon,
         title: title,
         text: respuesta.mensaje,
-        confirmButtonText: respuesta.exitoso ? 'Continuar' : 'Intentar nuevamente',
+        confirmButtonText: respuesta.exitoso ? 'Ver Factura' : 'Intentar nuevamente',
         confirmButtonColor: confirmButtonColor,
         allowOutsideClick: false,
         allowEscapeKey: false,
         showConfirmButton: true,
         timer: null, // Asegurar que no hay timer automático
         willClose: (popup) => {
-            console.log('SweetAlert cerrado por el usuario');
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            console.log('Usuario confirmó la alerta');
             if (respuesta.exitoso) {
-                // Limpiar el carrito y redirigir al inicio
-                console.log('Limpiando carrito y redirigiendo...');
+                // Limpiar el carrito y redirigir a la factura
                 localStorage.removeItem('carrito');
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 500);
+                window.location.href = `/factura/${respuesta.id_factura}`;
             } else {
                 // Mostrar el formulario nuevamente
                 document.getElementById('modalPagoForm').querySelector('button').style.display = 'block';
@@ -709,7 +638,6 @@ function mostrarResultadoTransaccion(respuesta) {
 // Mostrar error en la transacción usando SweetAlert2
 // Muestra un mensaje de error si ocurre un fallo en la comunicación bancaria
 function mostrarErrorTransaccion(error) {
-    console.error('Mostrando error de la transacción:', error);
     document.querySelector('.procesando-pago').style.display = 'none';
     document.getElementById('modalPago').style.display = 'none'; // Ocultar modal de pago
 

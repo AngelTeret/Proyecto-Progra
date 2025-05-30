@@ -59,7 +59,6 @@ function enviarTramaBanco(trama, host = BANCO_CONFIG.host, puerto = BANCO_CONFIG
         return Promise.reject(new Error('La trama a enviar no tiene el formato correcto.'));
     }
 
-    devLog(`Conectando al banco en ${host}:${puerto} usando Java...`);
     return ejecutarProcesoJava(trama, host, puerto);
 }
 
@@ -94,17 +93,14 @@ function ejecutarProcesoJava(trama, host, puerto) {
 
         proceso.stdout.on('data', (data) => {
             stdoutData += data.toString();
-            devLog('Java stdout:', data.toString());
         });
 
         proceso.stderr.on('data', (data) => {
             stderrData += data.toString();
-            devLog('Java stderr:', data.toString());
         });
 
         proceso.on('close', (code) => {
             clearTimeout(timeoutHandler);
-            devLog(`Java finalizado con código ${code}`);
 
             const respuestaMatch = stdoutData.match(/RESPUESTA_BANCO:(\d{63})/);
 

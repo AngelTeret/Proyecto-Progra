@@ -4,11 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda - Página Principal</title>
+    <title>Rare Beauty</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Styles -->
     <link rel="stylesheet" href="/styles/styles.css">
+    <!-- GSAP y Lenis -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.35/dist/lenis.min.js"></script>
 </head>
 
-<body>
+<body class="landing-page">
     <header class="barraSuperior">
         <nav class="barraNavegacion">
             <ul>
@@ -24,15 +33,106 @@
             </ul>
         </nav>
     </header>
+
     <main>
-        <section class="bannerPrincipal" id="bannerPrincipal">
-            <h1>BIENVENIDO</h1>
-            <!-- Banner dinámico -->
+        <!-- Hero Carousel Section -->
+        <section class="hero-carousel">
+            <div class="carousel-container">
+                <div class="carousel-slide active">
+                    <div class="carousel-image" style="background-image: url('/img/gallery/fondo4.jpg')"></div>
+                    <div class="carousel-content">
+                        <h2>Descubre tu belleza natural</h2>
+                        <p>Productos que realzan tu verdadera esencia</p>
+                    </div>
+                </div>
+                <div class="carousel-slide">
+                    <div class="carousel-image" style="background-image: url('/img/gallery/fondo5.jpg')"></div>
+                    <div class="carousel-content">
+                        <h2>Cuida tu piel</h2>
+                        <p>Fórmulas pensadas para nutrir y proteger</p>
+                    </div>
+                </div>
+                <div class="carousel-slide">
+                    <div class="carousel-image" style="background-image: url('/img/gallery/fondo3.jpg')"></div>
+                    <div class="carousel-content">
+                        <h2>Belleza consciente</h2>
+                        <p>Productos sostenibles y respetuosos con el medio ambiente</p>
+                    </div>
+                </div>
+            </div>
+            <button class="carousel-btn prev"><i class="fas fa-chevron-left"></i></button>
+            <button class="carousel-btn next"><i class="fas fa-chevron-right"></i></button>
+            <div class="carousel-dots"></div>
         </section>
-        <section class="productosDestacados" id="productosDestacados">
-            <!-- Productos destacados -->
+
+        <!-- Founder's Message Section -->
+        <section class="founder">
+            <div class="founder-grid">
+                <div class="founder-image">
+                    <img src="/img/gallery/fondo2.jpg" alt="Fundadora">
+                </div>
+                <div class="founder-message">
+                    <h2>Nuestra Filosofía</h2>
+                    <p>Creamos más que productos. Creamos espacios para aceptarte tal como eres. Porque la verdadera belleza nace de la autenticidad, y cada persona merece brillar con su luz propia.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Visual Gallery Section -->
+        <section class="gallery">
+            <div class="gallery-grid">
+                <div class="gallery-item">
+                    <img src="/img/gallery/galeria1.jpg" alt="Imagen de galería 1">
+                    <div class="gallery-overlay">
+                        <h3>Ojos</h3>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="/img/gallery/galeria2.jpg" alt="Imagen de galería 2">
+                    <div class="gallery-overlay">
+                        <h3>Labios</h3>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="/img/gallery/galeria3.jpg" alt="Imagen de galería 3">
+                    <div class="gallery-overlay">
+                        <h3>Rostro</h3>
+                    </div>
+                </div>
+                <div class="gallery-item">
+                    <img src="/img/gallery/galeria4.jpg" alt="Imagen de galería 4">
+                    <div class="gallery-overlay">
+                        <h3>Los más vendidos</h3>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Inspirational Quote Section -->
+        <section class="quote">
+            <div class="quote-container">
+                <h2>Tú defines tu belleza</h2>
+            </div>
+        </section>
+
+        <!-- Inclusion Section -->
+        <section class="inclusion">
+            <div class="inclusion-content">
+                <h2>Belleza sin límites</h2>
+                <p>Creemos en un mundo donde la belleza no tiene fronteras, donde cada historia merece ser contada y cada rostro celebrado. Nuestro compromiso con la diversidad y la sostenibilidad va más allá de las palabras - está en cada producto que creamos y cada historia que compartimos.</p>
+            </div>
+            <div class="inclusion-background"></div>
+        </section>
+
+        <!-- Call to Action Section -->
+        <section class="cta">
+            <div class="cta-content">
+                <h2>Adquiere tus productos favoritos</h2>
+                <a class="cta-button" href="/productos" target="_blank">Descubre más</a>
+            </div>
         </section>
     </main>
+
     <!-- Modal del carrito -->
     <div id="modalCarrito" class="modal">
         <div class="modal-content modern-cart">
@@ -53,8 +153,63 @@
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/js/main.js"></script>
-    <script>cargarLanding();</script>
+    <script src="/js/animations.js"></script>
+    <script>
+        // Carousel functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const carousel = document.querySelector('.carousel-container');
+            const slides = document.querySelectorAll('.carousel-slide');
+            const dotsContainer = document.querySelector('.carousel-dots');
+            const prevBtn = document.querySelector('.carousel-btn.prev');
+            const nextBtn = document.querySelector('.carousel-btn.next');
+            let currentSlide = 0;
+            
+            // Create dots
+            slides.forEach((_, index) => {
+                const dot = document.createElement('span');
+                dot.classList.add('carousel-dot');
+                if (index === 0) dot.classList.add('active');
+                dot.addEventListener('click', () => goToSlide(index));
+                dotsContainer.appendChild(dot);
+            });
+
+            const dots = document.querySelectorAll('.carousel-dot');
+
+            function updateSlides() {
+                slides.forEach((slide, index) => {
+                    slide.classList.remove('active');
+                    dots[index].classList.remove('active');
+                });
+                slides[currentSlide].classList.add('active');
+                dots[currentSlide].classList.add('active');
+            }
+
+            function goToSlide(index) {
+                currentSlide = index;
+                updateSlides();
+            }
+
+            function nextSlide() {
+                currentSlide = (currentSlide + 1) % slides.length;
+                updateSlides();
+            }
+
+            function prevSlide() {
+                currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+                updateSlides();
+            }
+
+            // Event listeners
+            prevBtn.addEventListener('click', prevSlide);
+            nextBtn.addEventListener('click', nextSlide);
+
+            // Auto advance
+            setInterval(nextSlide, 5000);
+        });
+    </script>
 </body>
 
 </html>

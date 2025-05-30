@@ -9,3 +9,13 @@ src/config.js
 src/logs/combined.log
 src/logs/error.log
 src/logs/*.log
+
+# Ignorar el archivo .env
+.env
+
+# Ignorar todos los archivos dentro de src/public/facturas/
+src/public/facturas/*
+
+# Pero NO ignorar la carpeta src/public/facturas/ en sí misma (para que se cree si no existe)
+# y permitir un archivo placeholder para asegurar que la carpeta se suba.
+!src/public/facturas/.gitkeep

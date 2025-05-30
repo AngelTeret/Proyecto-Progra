@@ -127,7 +127,7 @@ function enviarPago(event) {
     
     // Si pasó la validación, mostrar el modal de pago
     const modal = document.getElementById('modalPago');
-    modal.style.display = 'block';
+    modal.classList.add('show');
     
     // Generar un número de referencia aleatorio si no existe
     if (!document.getElementById('numeroReferencia').value) {
@@ -138,9 +138,16 @@ function enviarPago(event) {
     const cerrarBtn = document.querySelector('.cerrar-modal');
     if (cerrarBtn) {
         cerrarBtn.addEventListener('click', function() {
-            document.getElementById('modalPago').style.display = 'none';
+            document.getElementById('modalPago').classList.remove('show');
         });
     }
+    
+    // Cerrar modal al hacer click fuera de él
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+        }
+    });
     
     // Vincular el botón de procesar pago a la función correspondiente
     const btnProcesarPago = document.getElementById('btnProcesarPago');
@@ -161,12 +168,18 @@ function enviarPago(event) {
 
 // Funciones para procesar pagos
 function generarNumeroReferencia() {
-    return Math.floor(Math.random() * 900000000000 + 100000000000).toString();
+    // Generar un número aleatorio de exactamente 12 dígitos
+    let numero = '';
+    // El primer dígito no puede ser 0
+    numero += Math.floor(Math.random() * 9) + 1;
+    // Los otros 11 dígitos pueden ser cualquier número
+    for (let i = 0; i < 11; i++) {
+        numero += Math.floor(Math.random() * 10);
+    }
+    return numero;
 }
 
 function procesarPagoConBanco() {
-    console.log('Iniciando procesamiento de pago');
-    
     // Obtener todos los datos del formulario
     const tipoTransaccion = document.getElementById('tipoTransaccion').value;
     const canalTerminal = document.getElementById('canalTerminal').value;
@@ -176,25 +189,64 @@ function procesarPagoConBanco() {
     const tipoMoneda = document.getElementById('tipoMoneda').value;
     const numeroReferencia = document.getElementById('numeroReferencia').value;
     
-    console.log('Datos del formulario obtenidos:', {
-        tipoTransaccion, canalTerminal, idEmpresa,
-        idSucursal, codigoCliente, tipoMoneda, numeroReferencia
-    });
+    // Validar que todos los campos obligatorios estén seleccionados
+    const camposFaltantes = [];
+    
+    if (!tipoTransaccion) {
+        camposFaltantes.push('Tipo de Transacción');
+    }
+    
+    if (!canalTerminal) {
+        camposFaltantes.push('Canal/Terminal');
+    }
+    
+    if (!tipoMoneda) {
+        camposFaltantes.push('Tipo de Moneda');
+    }
+    
+    if (!codigoCliente.trim()) {
+        camposFaltantes.push('Código de Cliente');
+    }
+
+    if (!numeroReferencia.trim()) {
+        camposFaltantes.push('Número de Referencia');
+    }
+    
+    // Si hay campos faltantes, mostrar un solo mensaje con todos
+    if (camposFaltantes.length > 0) {
+        const mensaje = camposFaltantes.length === 1 
+            ? `Por favor complete el campo: ${camposFaltantes[0]}`
+            : `Por favor complete los siguientes campos:\n• ${camposFaltantes.join('\n• ')}`;
+            
+        Swal.fire({
+            title: 'Campos requeridos',
+            text: mensaje,
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
     
     // Usar el servicio de validación para verificar código cliente y número de referencia
     if (!validationService.validarCodigoCliente(codigoCliente)) {
-        alert('Por favor ingrese un código de cliente válido de 10 dígitos numéricos');
-        console.error('Validación fallida: código cliente inválido', codigoCliente);
+        Swal.fire({
+            title: 'Código inválido',
+            text: 'Por favor ingrese un código de cliente válido de 10 dígitos numéricos',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
         return;
     }
-    console.log('Validación de código cliente correcta');
     
     if (!validationService.validarNumeroReferencia(numeroReferencia)) {
-        alert('Por favor ingrese un número de referencia válido de 12 dígitos numéricos');
-        console.error('Validación fallida: número de referencia inválido', numeroReferencia);
+        Swal.fire({
+            title: 'Referencia inválida',
+            text: 'Por favor ingrese un número de referencia válido de 12 dígitos numéricos',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
         return;
     }
-    console.log('Validación de número de referencia correcta');
     
     // Obtener el total del carrito con 2 decimales, formateado como string de 10 caracteres
     const total = cartService.calcularTotal();
@@ -208,7 +260,7 @@ function procesarPagoConBanco() {
     document.querySelector('.procesando-pago').style.display = 'flex';
     document.querySelector('.resultado-final').classList.add('hidden');
     
-    // Generar la trama para el banco
+    // Generar la trama para el banco usando el número de referencia exactamente como se recibe
     const trama = generarTramaBancaria(
         tipoTransaccion,
         canalTerminal,
@@ -220,20 +272,12 @@ function procesarPagoConBanco() {
         numeroReferencia
     );
     
-    console.log('Trama generada:', trama);
-    console.log('Longitud de la trama:', trama.length);
-    
-    console.log('Preparando para enviar trama al banco...');
-    console.log('Total a cobrar:', total);
-    
     // Enviar la trama al banco usando el servicio API
     apiService.enviarTramaAlBanco(trama, total)
         .then(respuesta => {
-            console.log('Respuesta recibida del banco:', respuesta);
             uiService.mostrarResultadoTransaccion(respuesta);
         })
         .catch(error => {
-            console.error('Error en comunicación con el banco:', error);
             uiService.mostrarErrorTransaccion(error);
         });
 }
@@ -269,12 +313,14 @@ function generarTramaBancaria(tipoTransaccion, canalTerminal, idEmpresa, idSucur
     // El estado siempre es '00' al enviar (2 caracteres)
     const estado = '00';
     
+    // Formatear el número de referencia a 12 dígitos
+    const numeroReferenciaFormateado = numeroReferencia.padStart(12, '0');
+    
     // Unir todos los componentes de la trama (Total 63 caracteres)
     // 14 + 2 + 2 + 4 + 2 + 11 + 2 + 10 + 2 + 12 + 2 = 63
     const tramaCompleta = fechaHora + tipoTransaccion + canalTerminal + idEmpresa + idSucursal + 
-        codigoClienteFormateado + tipoMoneda + montoEntero + montoDecimal + numeroReferencia + estado;
+        codigoClienteFormateado + tipoMoneda + montoEntero + montoDecimal + numeroReferenciaFormateado + estado;
     
-    console.log('Longitud de la trama generada:', tramaCompleta.length);
     return tramaCompleta;
 }
 
